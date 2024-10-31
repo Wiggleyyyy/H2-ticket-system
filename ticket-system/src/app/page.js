@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Ticket, UserCog } from "lucide-react"
 import Link from "next/link"
 
-export default function Component() {
+export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
