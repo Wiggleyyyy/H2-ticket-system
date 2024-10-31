@@ -65,7 +65,7 @@ export default function Home() {
         <CardContent className="grid md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">For Workers</h3>
-            <Link href="/worker/login">
+            <Link href="/pages/login/">
               <Button variant="outline" className="w-full h-20 text-lg" size="lg">
                 <UserCog className="h-6 w-6 mr-2" />
                 Worker Login
