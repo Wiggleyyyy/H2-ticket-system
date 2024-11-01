@@ -59,7 +59,7 @@ export default function Home() {
       .insert([
         { 
           TicketNavn: ticketTitle,
-          KundeNavn: name,
+          Navn: name,
           EnhedsOplysning: deviceOrBrowser,
           Fejlkode: errorCode,
           Beskrivelse: description,
