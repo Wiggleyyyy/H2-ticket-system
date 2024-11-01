@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Ticket, UserCog } from "lucide-react"
 import Link from "next/link"
 
+
 export default function Home() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,8 +34,11 @@ export default function Home() {
       return;
     }
     setError("");
+
     // Here you would typically send the ticket data to your backend
+    
     console.log("Ticket submitted:", { name, email, phone, description, errorCode, ticketTitle, deviceOrBrowser });
+     
     // Reset form fields
     setName("");
     setEmail("");
@@ -45,6 +49,10 @@ export default function Home() {
     setTicketTitle("");
 
     //add success toast
+    return toast({
+      title: "Ticket submitted",
+      description: "The ticket was successfully created and will be reviewed shortly.",
+    });
   }
 
   return (
