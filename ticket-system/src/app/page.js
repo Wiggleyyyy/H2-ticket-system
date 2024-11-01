@@ -13,10 +13,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Ticket, UserCog } from "lucide-react"
+import { Phone, Ticket, UserCog } from "lucide-react"
 import Link from "next/link"
 import * as React from "react"
 import { useToast } from "@/hooks/use-toast"
+import { supabase } from "./utils/supabase/client"
 
 export default function Home() {
   const {toast} = useToast();
@@ -39,13 +40,8 @@ export default function Home() {
     setError("");
 
     // Here you would typically send the ticket data to your backend
-    
-    toast({
-      title: "Ticket submitted",
-      description: "The ticket was successfully created and will be reviewed shortly.",
-    });
-
-    console.log("Ticket submitted:", { name, email, phone, description, errorCode, ticketTitle, deviceOrBrowser });
+    CreateTicket();
+    // console.log("Ticket submitted:", { name, email, phone, description, errorCode, ticketTitle, deviceOrBrowser });
      
     // Reset form fields
     setName("");
@@ -55,11 +51,37 @@ export default function Home() {
     setErrorCode("");
     setDeviceOrBrowser("");
     setTicketTitle("");
+  }
 
-    //add success toast
-    return toast({
-      title: "Ticket submitted",
-      description: "The ticket was successfully created and will be reviewed shortly.",
+  async function CreateTicket() {
+    const { data, error } = await supabase
+      .from("Tickets")
+      .insert([
+        { 
+          TicketNavn: ticketTitle,
+          KundeNavn: name,
+          EnhedsOplysning: deviceOrBrowser,
+          Fejlkode: errorCode,
+          Beskrivelse: description,
+          Phone: phone,
+          Email: email,
+        }
+      ])
+      .select()
+
+    if (error) {
+      console.log(error)
+      return toast({
+        variant: "destructive",
+        title: "Couldn't create a ticket",
+        description: "There was an error creating the ticket, please try again later",
+      });
+    }
+
+    toast({
+      variant: "",
+      title: "Ticket created",
+      description: "You ticket will be handled shortly",
     });
   }
 
@@ -98,7 +120,6 @@ export default function Home() {
                   placeholder="Title of ticket"
                   value={ticketTitle}
                   onChange={(e) => setTicketTitle(e.target.value)}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -108,7 +129,6 @@ export default function Home() {
                   placeholder="Either device or browser"
                   value={deviceOrBrowser}
                   onChange={(e) => setDeviceOrBrowser(e.target.value)}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -118,7 +138,6 @@ export default function Home() {
                   placeholder="Your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  required
                 />
               </div>
               <div className="space-y-2">
