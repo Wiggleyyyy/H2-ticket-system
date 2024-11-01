@@ -47,7 +47,6 @@ export default function WorkerLogin() {
         title:"Missing fields.",
         description:"Please fill out email and password.",
       });
-     
     } else {
       setError("")
       // You would typically make an API call here to authenticate the user
