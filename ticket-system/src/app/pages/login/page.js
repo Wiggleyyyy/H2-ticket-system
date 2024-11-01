@@ -14,12 +14,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserCog } from "lucide-react"
 import Link from "next/link"
+import * as React from "react";
 import { supabase } from "@/app/utils/supabase/client"
+import { useRouter } from 'next/navigation';
+import { useToast } from "@/hooks/use-toast"
 
 export default function WorkerLogin() {
+
+  const {toast} = useToast();
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  // const [isLogin, setIsLogin] = useState(true)
+  const [usernameInput, setUsernameInput] = useState("")
+  const [repeatedPasswordInput, setRepeatedPasswordInput] = useState("")
+
+  const router = useRouter();
+
+  // const toggleAuthMode = () => {
+  //   setIsLogin(!isLogin)
+  // };
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -27,26 +41,60 @@ export default function WorkerLogin() {
 
     Login()
 
-    console.log("Login attempted with:", { email, password })
+    // console.log("Login attempted with:", { email, password })
     // For demo purposes, let's just show an error if fields are empty
     if (!email || !password) {
-      setError("Please fill in all fields")
+      return toast({
+        variant:"destructive",
+        title:"Missing fields.",
+        description:"Please fill out email and password.",
+      });
+     
     } else {
       setError("")
       // You would typically make an API call here to authenticate the user
     }
   }
+  
   async function Login() {
-    if (isLogin) {
+    // if (isLogin) {
       //login
-      if (!emailInput || !passwordInput) {
+      if (!email || !password) {
         return toast({
           variant:"destructive",
           title:"Missing fields.",
-          description:"Please fill out username and/or password.",
+          description:"Please fill out email and password.",
         });
       }
-    }
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password,
+        });
+
+        if (error) {
+          return toast({
+            variant: "destructive",
+            title: "Error logging in",
+            description: error.message,
+          });
+        }
+
+        toast({
+          title:"Login successful",
+          description: "Successfully logged in, redirecting to home page.",
+        });
+
+        router.push("./dashboard/");
+      } catch (err) {
+        return toast({
+          variant:"destructive",
+          title:"Error",
+          description:`${err.message}`,
+        });
+      }
+    // }
   }
 
   return (
@@ -71,7 +119,6 @@ export default function WorkerLogin() {
                 placeholder="your.email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
               />
             </div>
             <div className="space-y-2">
@@ -81,12 +128,11 @@ export default function WorkerLogin() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" className="w-full">
-              Log In
+              {"Log In"}
             </Button>
           </form>
         </CardContent>

@@ -7,6 +7,8 @@ import { Moon, Sun } from "lucide-react"
 import localFont from "next/font/local"
 import { useTheme } from 'next-themes'
 import "./globals.css"
+import { Toaster } from "@/components/ui/toaster"
+import { toast } from '@/components/ui/toast'
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
