@@ -15,9 +15,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Ticket, UserCog } from "lucide-react"
 import Link from "next/link"
-
+import * as React from "react"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Home() {
+  const {toast} = useToast();
+
+export default function Home() {
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -37,6 +42,11 @@ export default function Home() {
 
     // Here you would typically send the ticket data to your backend
     
+    toast({
+      title: "Ticket submitted",
+      description: "The ticket was successfully created and will be reviewed shortly.",
+    });
+
     console.log("Ticket submitted:", { name, email, phone, description, errorCode, ticketTitle, deviceOrBrowser });
      
     // Reset form fields
@@ -75,6 +85,7 @@ export default function Home() {
             <h3 className="text-lg font-semibold">For Workers</h3>
             <Link href="/pages/login/">
               <Button variant="outline" className="w-full h-20 text-lg" size="lg">
+              <Button variant="outline" className="w-full h-20 text-lg my-4" size="lg">
                 <UserCog className="h-6 w-6 mr-2" />
                 Worker Login
               </Button>
