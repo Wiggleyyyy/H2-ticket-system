@@ -37,7 +37,9 @@ export default function Home() {
       return;
     }
     setError("");
+
     // Here you would typically send the ticket data to your backend
+    
     toast({
       title: "Ticket submitted",
       description: "The ticket was successfully created and will be reviewed shortly.",
@@ -52,7 +54,6 @@ export default function Home() {
     setDeviceOrBrowser("");
     setTicketTitle("");
 
-    
   }
 
   return (
