@@ -26,8 +26,6 @@ export default function WorkerLogin() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   // const [isLogin, setIsLogin] = useState(true)
-  const [usernameInput, setUsernameInput] = useState("")
-  const [repeatedPasswordInput, setRepeatedPasswordInput] = useState("")
 
   const router = useRouter();
 
