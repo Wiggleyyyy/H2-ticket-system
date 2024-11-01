@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { UserCog } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/app/utils/supabase/client"
 
 export default function WorkerLogin() {
   const [email, setEmail] = useState("")
@@ -23,6 +24,9 @@ export default function WorkerLogin() {
   const handleSubmit = (e) => {
     e.preventDefault()
     // Here you would typically handle the login logic
+
+    Login()
+
     console.log("Login attempted with:", { email, password })
     // For demo purposes, let's just show an error if fields are empty
     if (!email || !password) {
@@ -30,6 +34,18 @@ export default function WorkerLogin() {
     } else {
       setError("")
       // You would typically make an API call here to authenticate the user
+    }
+  }
+  async function Login() {
+    if (isLogin) {
+      //login
+      if (!emailInput || !passwordInput) {
+        return toast({
+          variant:"destructive",
+          title:"Missing fields.",
+          description:"Please fill out username and/or password.",
+        });
+      }
     }
   }
 
