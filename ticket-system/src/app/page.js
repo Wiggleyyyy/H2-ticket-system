@@ -21,6 +21,8 @@ import { useToast } from "@/hooks/use-toast"
 export default function Home() {
   const {toast} = useToast();
 
+export default function Home() {
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,7 +46,9 @@ export default function Home() {
       title: "Ticket submitted",
       description: "The ticket was successfully created and will be reviewed shortly.",
     });
+
     console.log("Ticket submitted:", { name, email, phone, description, errorCode, ticketTitle, deviceOrBrowser });
+     
     // Reset form fields
     setName("");
     setEmail("");
@@ -54,6 +58,11 @@ export default function Home() {
     setDeviceOrBrowser("");
     setTicketTitle("");
 
+    //add success toast
+    return toast({
+      title: "Ticket submitted",
+      description: "The ticket was successfully created and will be reviewed shortly.",
+    });
   }
 
   return (
@@ -75,6 +84,7 @@ export default function Home() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">For Workers</h3>
             <Link href="/pages/login/">
+              <Button variant="outline" className="w-full h-20 text-lg" size="lg">
               <Button variant="outline" className="w-full h-20 text-lg my-4" size="lg">
                 <UserCog className="h-6 w-6 mr-2" />
                 Worker Login
