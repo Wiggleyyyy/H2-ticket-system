@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { supabase } from "@/app/utils/supabase/client"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import { Button } from "@/components/ui/button"
@@ -34,13 +33,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { PlusCircle, Ticket, UserPlus } from "lucide-react"
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { PlusCircle, Ticket, List } from "lucide-react"
+import { supabase } from "@/app/utils/supabase/client"
 
 export default function Dashboard() {
   const router = useRouter()
   const { toast } = useToast()
   const [tickets, setTickets] = useState([])
-  const [userMetadata, setUserMetadata] = useState({ email: "", phone: "", full_name: "" })
+  const [medarbejdere, setMedarbejdere] = useState([])
+  const [userMetadata, setUserMetadata] = useState({ email: "", phone: "", full_name: "",isSupporter: false, isAdmin: false, isDeveloper: false })
   const [newTicket, setNewTicket] = useState({
     ticketTitle: "",
     name: "",
@@ -51,39 +53,78 @@ export default function Dashboard() {
     deviceOrBrowser: "",
     createdFor: "self",
   })
-  const [newAccount, setNewAccount] = useState({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    displayName: "",
-    phoneNumber: "",
+  const [newUser, setNewUser] = useState({
+    Fornavn: "",
+    Efternavn: "",
+    Department: "",
+    Mail: "",
+    Phone: "",
+    IsSupporter: false,
+    IsAdmin: false,
+    IsDeveloper: false,
+    HashedPassw: "",
   })
   const [error, setError] = useState("")
   const [isAlertOpen, setIsAlertOpen] = useState(false)
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push("./login")
+    const getUserFromCookie = () => {
+      const cookies = document.cookie.split("; ").reduce((acc, cookie) => {
+        const [key, value] = cookie.split("=")
+        acc[key] = decodeURIComponent(value)
+        return acc
+      }, {})
+
+      if (cookies.user) {
+        try {
+          const userData = JSON.parse(cookies.user)
+          console.log("Parsed user data from cookie:", userData)  // Log to verify structure
+
+          setUserMetadata({
+            email: userData.email || "",
+            phone: userData.phone || "",
+            full_name: userData.full_name || "",
+            isAdmin: userData.isAdmin || false,
+            isDeveloper: userData.isDeveloper || false,
+          })
+
+          console.log("User metadata set:", userMetadata) // Log to confirm assignment
+        } catch (error) {
+          console.error("Failed to parse user cookie:", error)
+          router.push("./login") // Redirect to login if parsing fails
+        }
       } else {
-        const { user } = session
-        setUserMetadata({
-          email: user.user_metadata.email,
-          phone: user.user_metadata.phone,
-          full_name: user.user_metadata.full_name,
-        })
-        fetchTickets()
-        subscribeToTickets()
+        console.warn("No 'user' cookie found; redirecting to login.")
+        router.push("./login") // Redirect to login if cookie is missing
       }
     }
-    
-    checkSession()
+
+    getUserFromCookie()
+    fetchMedarbejdere()
+    fetchTickets()
+    subscribeToTickets()
 
     return () => {
       supabase.removeAllChannels()
     }
   }, [router])
+
+  const fetchMedarbejdere = async () => {
+    const { data, error } = await supabase
+      .from("Medarbejdere")
+      .select("*")
+    
+    if (error) {
+      toast({
+        title: "Error fetching members",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      setMedarbejdere(data)
+    }
+  }
 
   const fetchTickets = async () => {
     const { data, error } = await supabase
@@ -158,127 +199,153 @@ export default function Dashboard() {
     }
   }
 
-  const handleCreateAccount = async (e) => {
-    e.preventDefault()
-    if (newAccount.password !== newAccount.confirmPassword) {
-      setError("Passwords do not match.")
-      return
-    }
-    setError("")
-
-
-    // const { data, error } = await supabase.auth.signUp({
-    //   email: newAccount.email,
-    //   password: newAccount.password,
-    //   phone: newAccount.phoneNumber,
-    //   options: {
-    //     data: {
-    //       full_name: newAccount.displayName,
-    //     }
-    //   }
-    // })
+  const handleCreateUser = async () => {
+    const { data, error } = await supabase
+      .from("Medarbejdere")
+      .insert([newUser])
+      .select()
 
     if (error) {
       toast({
-        title: "Error creating account",
+        title: "Error creating user",
         description: error.message,
         variant: "destructive",
       })
     } else {
       toast({
-        title: "Account created",
-        description: "New account has been successfully created.",
+        title: "User created",
+        description: "New user has been successfully created.",
       })
-      setNewAccount({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        displayName: "",
-        phoneNumber: "",
+      setNewUser({
+        Fornavn: "",
+        Efternavn: "",
+        Department: "",
+        Mail: "",
+        Phone: "",
+        IsSupporter: false,
+        IsAdmin: false,
+        IsDeveloper: false,
+        HashedPassw: "",
       })
-      setIsAlertOpen(false)
+      setIsCreateUserOpen(false)
+      fetchMedarbejdere()
     }
   }
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Worker Dashboard</h1>
-      
-      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
-        <AlertDialogTrigger asChild>
-          <Button className="mb-6">
-            <UserPlus className="mr-2 h-4 w-4" />
-            Create New Account
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Create New Account</AlertDialogTitle>
-            <AlertDialogDescription>
-              Fill in the details to create a new worker account.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <form onSubmit={handleCreateAccount} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Email address"
-                value={newAccount.email}
-                onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })}
-                required
-              />
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Worker Dashboard</h1>
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" className="flex items-center gap-2">
+              <List className="h-5 w-5" />
+              Members
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Members List</SheetTitle>
+              <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
+            </SheetHeader>
+            <div className="mt-4 space-y-4">
+              {medarbejdere.map((employee) => (
+                <Card key={employee.id}>
+                  <CardHeader>
+                    <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
+                    <CardDescription>Department: {employee.Department}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p>Email: {employee.Mail}</p>
+                    <p>Phone: {employee.Phone}</p>
+                    <p>Is Supporter: {employee.IsSupporter ? "Yes" : "No"}</p>
+                    <p>Is Admin: {employee.IsAdmin ? "Yes" : "No"}</p>
+                    <p>Is Developer: {employee.IsDeveloper ? "Yes" : "No"}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={newAccount.password}
-                onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={newAccount.confirmPassword}
-                onChange={(e) => setNewAccount({ ...newAccount, confirmPassword: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
-              <Input
-                id="displayName"
-                placeholder="Full Name"
-                value={newAccount.displayName}
-                onChange={(e) => setNewAccount({ ...newAccount, displayName: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
-              <Input
-                id="phoneNumber"
-                type="tel"
-                placeholder="Phone Number"
-                value={newAccount.phoneNumber}
-                onChange={(e) => setNewAccount({ ...newAccount, phoneNumber: e.target.value })}
-                required
-              />
-            </div>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction type="submit">Create Account</AlertDialogAction>
-            </AlertDialogFooter>
-          </form>
-        </AlertDialogContent>
-      </AlertDialog>
+            {(userMetadata.isAdmin || userMetadata.isDeveloper) && (
+              <div className="mt-4">
+                <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="primary" className="w-full mt-4">Create User</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Create New User</AlertDialogTitle>
+                      <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="First Name"
+                        value={newUser.Fornavn}
+                        onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Last Name"
+                        value={newUser.Efternavn}
+                        onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Department"
+                        value={newUser.Department}
+                        onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Email"
+                        type="email"
+                        value={newUser.Mail}
+                        onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Phone"
+                        type="tel"
+                        value={newUser.Phone}
+                        onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Password"
+                        type="password"
+                        value={newUser.HashedPassw}
+                        onChange={(e) => setNewUser({ ...newUser, HashedPassw: e.target.value })}
+                      />
+                      <div className="flex gap-4">
+                        <Label>
+                          <Input
+                            type="checkbox"
+                            checked={newUser.IsSupporter}
+                            onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
+                          /> Supporter
+                        </Label>
+                        <Label>
+                          <Input
+                            type="checkbox"
+                            checked={newUser.IsAdmin}
+                            onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
+                          /> Admin
+                        </Label>
+                        <Label>
+                          <Input
+                            type="checkbox"
+                            checked={newUser.IsDeveloper}
+                            onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
+                          /> Developer
+                        </Label>
+                      </div>
+                    </div>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
       
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
@@ -415,7 +482,7 @@ export default function Dashboard() {
                   </CardContent>
                   <CardFooter>
                     <p className="text-xs text-muted-foreground">
-                      Created at: {new  Date(ticket.created_at).toLocaleString()}
+                      Created at: {new Date(ticket.created_at).toLocaleString()}
                     </p>
                   </CardFooter>
                 </Card>

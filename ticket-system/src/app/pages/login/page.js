@@ -1,90 +1,93 @@
 'use client'
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { UserCog } from "lucide-react"
-import Link from "next/link"
-import * as React from "react";
-import { supabase } from "@/app/utils/supabase/client"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { UserCog } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/app/utils/supabase/client"; // Ensure this imports your Supabase client
+import { setCookie } from 'cookies-next'; // For cookie handling
 
 export default function WorkerLogin() {
-
-  const {toast} = useToast();
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  // const [isLogin, setIsLogin] = useState(true)
-
+  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const router = useRouter();
 
-  // const toggleAuthMode = () => {
-  //   setIsLogin(!isLogin)
-  // };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Here you would typically handle the login logic
-
-    Login()
-
-    // console.log("Login attempted with:", { email, password })
-    // For demo purposes, let's just show an error if fields are empty
+    // Check for empty fields
     if (!email || !password) {
       return toast({
-        variant:"destructive",
-        title:"Missing fields.",
-        description:"Please fill out email and password.",
+        variant: "destructive",
+        title: "Missing fields.",
+        description: "Please fill out email and password.",
       });
-    } else {
-      setError("")
-      // You would typically make an API call here to authenticate the user
+    }
+
+    const loginSuccessful = await Login();
+    if (loginSuccessful) {
+      // Redirect to dashboard on successful login
+      router.push("./dashboard/");
     }
   }
-  
+
   async function Login() {
-    // if (isLogin) {
-      //login
-      if (!email || !password) {
+    try {
+      // Query the Medarbejdere table to find the user by email
+      const { data, error } = await supabase
+        .from('Medarbejdere')
+        .select('*')
+        .eq('Mail', email)
+        .single();
+
+      // Check for errors in the query
+      if (error || !data) {
         return toast({
-          variant:"destructive",
-          title:"Missing fields.",
-          description:"Please fill out email and password.",
+          variant: "destructive",
+          title: "Error logging in",
+          description: "Email not found. Please check your email.",
         });
       }
 
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
-
-        if (error) {
-          return toast({
-            variant: "destructive",
-            title: "Error logging in",
-            description: error.message,
-          });
-        }
-
-        toast({
-          title:"Login successful",
-          description: "Successfully logged in, redirecting to home page.",
-        });
-
-        router.push("./dashboard/");
-      } catch (err) {
+      // Here, assume a simple password check for demonstration (not recommended for production)
+      if (password !== data.HashedPassword) {
         return toast({
-          variant:"destructive",
-          title:"Error",
-          description:`${err.message}`,
+          variant: "destructive",
+          title: "Error logging in",
+          description: "Incorrect password. Please try again.",
         });
       }
-    // }
+
+      // Set cookie for session management
+      setCookie('user', JSON.stringify({ email: data.Mail }), { maxAge: 60 * 60 * 24 }); // 1 day session
+
+      toast({
+        title: "Login successful",
+        description: "Successfully logged in, redirecting to the dashboard.",
+      });
+
+      return true; // Return true if login is successful
+    } catch (err) {
+      return toast({
+        variant: "destructive",
+        title: "Error",
+        description: `${err.message}`,
+      });
+    }
   }
 
   return (
@@ -122,7 +125,7 @@ export default function WorkerLogin() {
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <Button type="submit" className="w-full">
-              {"Log In"}
+              Log In
             </Button>
           </form>
         </CardContent>
@@ -133,5 +136,5 @@ export default function WorkerLogin() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
