@@ -23,12 +23,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PlusCircle, Ticket } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { PlusCircle, Ticket, UserPlus } from "lucide-react"
 
 export default function Dashboard() {
   const router = useRouter()
   const { toast } = useToast()
   const [tickets, setTickets] = useState([])
+  const [userMetadata, setUserMetadata] = useState({ email: "", phone: "", full_name: "" })
   const [newTicket, setNewTicket] = useState({
     ticketTitle: "",
     name: "",
@@ -39,7 +51,15 @@ export default function Dashboard() {
     deviceOrBrowser: "",
     createdFor: "self",
   })
+  const [newAccount, setNewAccount] = useState({
+    email: "",
+    password: "",
+    confirmPassword: "",
+    displayName: "",
+    phoneNumber: "",
+  })
   const [error, setError] = useState("")
+  const [isAlertOpen, setIsAlertOpen] = useState(false)
 
   useEffect(() => {
     const checkSession = async () => {
@@ -47,18 +67,29 @@ export default function Dashboard() {
       if (!session) {
         router.push("./login")
       } else {
+        const { user } = session
+        setUserMetadata({
+          email: user.user_metadata.email,
+          phone: user.user_metadata.phone,
+          full_name: user.user_metadata.full_name,
+        })
         fetchTickets()
+        subscribeToTickets()
       }
     }
     
-    // checkSession()
+    checkSession()
+
+    return () => {
+      supabase.removeAllChannels()
+    }
   }, [router])
 
   const fetchTickets = async () => {
     const { data, error } = await supabase
-      .from('Tickets')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .from("Tickets")
+      .select("*")
+      .order("created_at", { ascending: false })
     
     if (error) {
       toast({
@@ -71,28 +102,35 @@ export default function Dashboard() {
     }
   }
 
+  const subscribeToTickets = () => {
+    supabase
+      .channel('Tickets')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Tickets' }, (payload) => {
+        setTickets(currentTickets => [payload.new, ...currentTickets])
+      })
+      .subscribe()
+  }
+
   const handleCreateTicket = async (e) => {
     e.preventDefault()
-    if (newTicket.createdFor === 'customer' && !newTicket.email && !newTicket.phone) {
+    if (newTicket.createdFor === "customer" && !newTicket.email && !newTicket.phone) {
       setError("Please provide either an email or a phone number for the customer.")
       return
     }
     setError("")
 
-    const { data: { user } } = await supabase.auth.getUser()
-    
     const ticketData = {
       TicketNavn: newTicket.ticketTitle,
-      Navn: newTicket.createdFor === 'self' ? user.user_metadata.full_name : newTicket.name,
+      Navn: newTicket.createdFor === "self" ? userMetadata.full_name : newTicket.name,
       EnhedsOplysning: newTicket.deviceOrBrowser,
       Fejlkode: newTicket.errorCode,
       Beskrivelse: newTicket.description,
-      Phone: newTicket.phone,
-      Email: newTicket.email,
+      Phone: newTicket.createdFor === "self" ? userMetadata.phone : newTicket.phone,
+      Email: newTicket.createdFor === "self" ? userMetadata.email : newTicket.email,
     }
 
     const { data, error } = await supabase
-      .from('Tickets')
+      .from("Tickets")
       .insert([ticketData])
       .select()
 
@@ -107,7 +145,6 @@ export default function Dashboard() {
         title: "Ticket created",
         description: "Your ticket has been successfully created.",
       })
-      fetchTickets()
       setNewTicket({
         ticketTitle: "",
         name: "",
@@ -121,9 +158,127 @@ export default function Dashboard() {
     }
   }
 
+  const handleCreateAccount = async (e) => {
+    e.preventDefault()
+    if (newAccount.password !== newAccount.confirmPassword) {
+      setError("Passwords do not match.")
+      return
+    }
+    setError("")
+
+
+    // const { data, error } = await supabase.auth.signUp({
+    //   email: newAccount.email,
+    //   password: newAccount.password,
+    //   phone: newAccount.phoneNumber,
+    //   options: {
+    //     data: {
+    //       full_name: newAccount.displayName,
+    //     }
+    //   }
+    // })
+
+    if (error) {
+      toast({
+        title: "Error creating account",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Account created",
+        description: "New account has been successfully created.",
+      })
+      setNewAccount({
+        email: "",
+        password: "",
+        confirmPassword: "",
+        displayName: "",
+        phoneNumber: "",
+      })
+      setIsAlertOpen(false)
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Worker Dashboard</h1>
+      
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogTrigger asChild>
+          <Button className="mb-6">
+            <UserPlus className="mr-2 h-4 w-4" />
+            Create New Account
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create New Account</AlertDialogTitle>
+            <AlertDialogDescription>
+              Fill in the details to create a new worker account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <form onSubmit={handleCreateAccount} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email address"
+                value={newAccount.email}
+                onChange={(e) => setNewAccount({ ...newAccount, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={newAccount.password}
+                onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={newAccount.confirmPassword}
+                onChange={(e) => setNewAccount({ ...newAccount, confirmPassword: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                placeholder="Full Name"
+                value={newAccount.displayName}
+                onChange={(e) => setNewAccount({ ...newAccount, displayName: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Input
+                id="phoneNumber"
+                type="tel"
+                placeholder="Phone Number"
+                value={newAccount.phoneNumber}
+                onChange={(e) => setNewAccount({ ...newAccount, phoneNumber: e.target.value })}
+                required
+              />
+            </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction type="submit">Create Account</AlertDialogAction>
+            </AlertDialogFooter>
+          </form>
+        </AlertDialogContent>
+      </AlertDialog>
       
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
@@ -137,10 +292,18 @@ export default function Dashboard() {
           <CardContent>
             <form onSubmit={handleCreateTicket} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="createdFor">Created For</Label>
+                <Label htmlFor="createdFor">Created for</Label>
                 <Select
                   value={newTicket.createdFor}
-                  onValueChange={(value) => setNewTicket({...newTicket, createdFor: value})}
+                  onValueChange={(value) => {
+                    setNewTicket({
+                      ...newTicket,
+                      createdFor: value,
+                      name: value === "self" ? userMetadata.full_name : "",
+                      email: value === "self" ? userMetadata.email : "",
+                      phone: value === "self" ? userMetadata.phone : "",
+                    })
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select who it's for" />
@@ -157,38 +320,40 @@ export default function Dashboard() {
                   id="ticketTitle"
                   placeholder="Title of ticket"
                   value={newTicket.ticketTitle}
-                  onChange={(e) => setNewTicket({...newTicket, ticketTitle: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, ticketTitle: e.target.value })}
                 />
               </div>
-              {newTicket.createdFor === 'customer' && (
+              {newTicket.createdFor === "customer" && (
                 <div className="space-y-2">
                   <Label htmlFor="name">Customer Name</Label>
                   <Input
                     id="name"
                     placeholder="Customer's name"
                     value={newTicket.name}
-                    onChange={(e) => setNewTicket({...newTicket, name: e.target.value})}
+                    onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
                   />
                 </div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email (Optional if phone is provided)</Label>
+                <Label htmlFor="email">Email {newTicket.createdFor === "customer" && "(Optional if phone is provided)"}</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="Email address"
                   value={newTicket.email}
-                  onChange={(e) => setNewTicket({...newTicket, email: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, email: e.target.value })}
+                  readOnly={newTicket.createdFor === "self"}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone (Optional if email is provided)</Label>
+                <Label htmlFor="phone">Phone {newTicket.createdFor === "customer" && "(Optional if email is provided)"}</Label>
                 <Input
                   id="phone"
                   type="tel"
                   placeholder="Example: +45 01 23 45 67"
                   value={newTicket.phone}
-                  onChange={(e) => setNewTicket({...newTicket, phone: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, phone: e.target.value })}
+                  readOnly={newTicket.createdFor === "self"}
                 />
               </div>
               <div className="space-y-2">
@@ -197,7 +362,7 @@ export default function Dashboard() {
                   id="deviceOrBrowser"
                   placeholder="Either device or browser"
                   value={newTicket.deviceOrBrowser}
-                  onChange={(e) => setNewTicket({...newTicket, deviceOrBrowser: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, deviceOrBrowser: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -207,7 +372,7 @@ export default function Dashboard() {
                   type="number"
                   placeholder="Example: 404"
                   value={newTicket.errorCode}
-                  onChange={(e) => setNewTicket({...newTicket, errorCode: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, errorCode: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -216,7 +381,7 @@ export default function Dashboard() {
                   id="description"
                   placeholder="Describe the issue..."
                   value={newTicket.description}
-                  onChange={(e) => setNewTicket({...newTicket, description: e.target.value})}
+                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                 />
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
@@ -240,7 +405,7 @@ export default function Dashboard() {
                   <CardHeader>
                     <CardTitle>{ticket.TicketNavn}</CardTitle>
                     <CardDescription>
-                      Created for: {ticket.created_for ? 'Self' : 'Customer'}
+                      Created for: {ticket.Navn}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -250,7 +415,7 @@ export default function Dashboard() {
                   </CardContent>
                   <CardFooter>
                     <p className="text-xs text-muted-foreground">
-                      Created at: {new Date(ticket.created_at).toLocaleString()}
+                      Created at: {new  Date(ticket.created_at).toLocaleString()}
                     </p>
                   </CardFooter>
                 </Card>
