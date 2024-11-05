@@ -42,7 +42,7 @@ export default function Dashboard() {
   const { toast } = useToast()
   const [tickets, setTickets] = useState([])
   const [medarbejdere, setMedarbejdere] = useState([])
-  const [userMetadata, setUserMetadata] = useState({ email: "", phone: "", full_name: "",isSupporter: false, isAdmin: false, isDeveloper: false })
+  const [userMetadata, setUserMetadata] = useState({})
   const [newTicket, setNewTicket] = useState({
     ticketTitle: "",
     name: "",
@@ -65,7 +65,6 @@ export default function Dashboard() {
     HashedPassw: "",
   })
   const [error, setError] = useState("")
-  const [isAlertOpen, setIsAlertOpen] = useState(false)
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
 
   useEffect(() => {
@@ -75,40 +74,50 @@ export default function Dashboard() {
         acc[key] = decodeURIComponent(value)
         return acc
       }, {})
-
+  
       if (cookies.user) {
         try {
           const userData = JSON.parse(cookies.user)
-          console.log("Parsed user data from cookie:", userData)  // Log to verify structure
-
+          console.log("Parsed user data from cookie:", userData)
+  
+          // Set userMetadata with userData
           setUserMetadata({
-            email: userData.email || "",
-            phone: userData.phone || "",
-            full_name: userData.full_name || "",
-            isAdmin: userData.isAdmin || false,
-            isDeveloper: userData.isDeveloper || false,
+            id: userData.data.id || null,
+            Fornavn: userData.data.Fornavn || "",
+            Efternavn: userData.data.Efternavn || "",
+            Department: userData.data.Department || "",
+            Mail: userData.data.Mail || "",
+            Phone: userData.data.Phone || "",
+            IsSupporter: userData.data.IsSupporter || false,
+            IsAdmin: userData.data.IsAdmin || false,
+            IsDeveloper: userData.data.IsDeveloper || false,
+            HashedPassword: userData.data.HashedPassword || ""
           })
-
-          console.log("User metadata set:", userMetadata) // Log to confirm assignment
         } catch (error) {
           console.error("Failed to parse user cookie:", error)
-          router.push("./login") // Redirect to login if parsing fails
+          router.push("./login")
         }
       } else {
         console.warn("No 'user' cookie found; redirecting to login.")
-        router.push("./login") // Redirect to login if cookie is missing
+        router.push("./login")
       }
     }
-
+  
     getUserFromCookie()
     fetchMedarbejdere()
     fetchTickets()
     subscribeToTickets()
-
+  
     return () => {
       supabase.removeAllChannels()
     }
   }, [router])
+  
+  // Use an additional useEffect to log userMetadata after it updates
+  useEffect(() => {
+    console.log("User metadata updated:", userMetadata)
+  }, [userMetadata])
+  
 
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
@@ -266,83 +275,79 @@ export default function Dashboard() {
                 </Card>
               ))}
             </div>
-            {(userMetadata.isAdmin || userMetadata.isDeveloper) && (
-              <div className="mt-4">
-                <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="primary" className="w-full mt-4">Create User</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Create New User</AlertDialogTitle>
-                      <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="First Name"
-                        value={newUser.Fornavn}
-                        onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Last Name"
-                        value={newUser.Efternavn}
-                        onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Department"
-                        value={newUser.Department}
-                        onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Email"
-                        type="email"
-                        value={newUser.Mail}
-                        onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Phone"
-                        type="tel"
-                        value={newUser.Phone}
-                        onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Password"
-                        type="password"
-                        value={newUser.HashedPassw}
-                        onChange={(e) => setNewUser({ ...newUser, HashedPassw: e.target.value })}
-                      />
-                      <div className="flex gap-4">
-                        <Label>
-                          <Input
-                            type="checkbox"
-                            checked={newUser.IsSupporter}
-                            onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
-                          /> Supporter
-                        </Label>
-                        <Label>
-                          <Input
-                            type="checkbox"
-                            checked={newUser.IsAdmin}
-                            onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
-                          /> Admin
-                        </Label>
-                        <Label>
-                          <Input
-                            type="checkbox"
-                            checked={newUser.IsDeveloper}
-                            onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
-                          /> Developer
-                        </Label>
-                      </div>
+            {(userMetadata.IsAdmin || userMetadata.IsDeveloper) && (
+            <div className="mt-4">
+              <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="primary" className="w-full mt-4">Create User</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Create New User</AlertDialogTitle>
+                    <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="space-y-4">
+                    <Input
+                      placeholder="First Name"
+                      value={newUser.Fornavn}
+                      onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Last Name"
+                      value={newUser.Efternavn}
+                      onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Department"
+                      value={newUser.Department}
+                      onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Email"
+                      type="email"
+                      value={newUser.Mail}
+                      onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Phone"
+                      type="tel"
+                      value={newUser.Phone}
+                      onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
+                    />
+                    <Input
+                      placeholder="Password"
+                      type="password"
+                      value={newUser.HashedPassw}
+                      onChange={(e) => setNewUser({ ...newUser, HashedPassw: e.target.value })}
+                    />
+                    <div className="flex gap-4">
+                      <Label>
+                        <Input
+                          type="checkbox"
+                          checked={newUser.IsSupporter}
+                          onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
+                        /> Supporter
+                      </Label>
+                      <Label>
+                        <Input
+                          type="checkbox"
+                          checked={newUser.IsAdmin}
+                          onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
+                        /> Admin
+                      </Label>
+                      <Label>
+                        <Input
+                          type="checkbox"
+                          checked={newUser.IsDeveloper}
+                          onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
+                        /> Developer
+                      </Label>
                     </div>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
+                  </div>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
           </SheetContent>
         </Sheet>
       </div>
@@ -432,7 +437,7 @@ export default function Dashboard() {
                   onChange={(e) => setNewTicket({ ...newTicket, deviceOrBrowser: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
+              <div  className="space-y-2">
                 <Label htmlFor="errorCode">Error Code (If provided)</Label>
                 <Input
                   id="errorCode"

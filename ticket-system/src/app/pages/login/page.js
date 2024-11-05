@@ -73,7 +73,7 @@ export default function WorkerLogin() {
       }
 
       // Set cookie for session management
-      setCookie('user', JSON.stringify({ email: data.Mail }), { maxAge: 60 * 60 * 24 }); // 1 day session
+      setCookie('user', JSON.stringify({ data }), { maxAge: 60 * 60 * 24 }); // 1 day session
 
       toast({
         title: "Login successful",
