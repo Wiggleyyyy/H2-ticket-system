@@ -171,12 +171,12 @@ export default function Dashboard() {
 
     const ticketData = {
       TicketNavn: newTicket.ticketTitle,
-      Navn: newTicket.createdFor === "self" ? userMetadata.full_name : newTicket.name,
+      Navn: newTicket.createdFor === "self" ? userMetadata.Fornavn : newTicket.name,
       EnhedsOplysning: newTicket.deviceOrBrowser,
       Fejlkode: newTicket.errorCode,
       Beskrivelse: newTicket.description,
-      Phone: newTicket.createdFor === "self" ? userMetadata.phone : newTicket.phone,
-      Email: newTicket.createdFor === "self" ? userMetadata.email : newTicket.email,
+      Phone: newTicket.createdFor === "self" ? userMetadata.Phone : newTicket.phone,
+      Email: newTicket.createdFor === "self" ? userMetadata.Mail : newTicket.email,
     }
 
     const { data, error } = await supabase
@@ -368,13 +368,23 @@ export default function Dashboard() {
                 <Select
                   value={newTicket.createdFor}
                   onValueChange={(value) => {
-                    setNewTicket({
-                      ...newTicket,
-                      createdFor: value,
-                      name: value === "self" ? userMetadata.full_name : "",
-                      email: value === "self" ? userMetadata.email : "",
-                      phone: value === "self" ? userMetadata.phone : "",
-                    })
+                    if (value === "self") {
+                      setNewTicket({
+                        ...newTicket,
+                        createdFor: value,
+                        name: userMetadata.Fornavn || "",
+                        email: userMetadata.Mail || "",
+                        phone: userMetadata.Phone || "",
+                      })
+                    } else {
+                      setNewTicket({
+                        ...newTicket,
+                        createdFor: value,
+                        name: "",
+                        email: "",
+                        phone: "",
+                      })
+                    }
                   }}
                 >
                   <SelectTrigger>
