@@ -35,9 +35,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { PlusCircle, Ticket, List } from "lucide-react"
 import { supabase } from "@/app/utils/supabase/client"
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -82,8 +82,7 @@ export default function Dashboard() {
           const userData = JSON.parse(cookies.user)
           console.log("Parsed user data from cookie:", userData)
   
-          // Set userMetadata with userData
-          setUserMetadata({
+          const metaData = {
             id: userData.data.id || null,
             Fornavn: userData.data.Fornavn || "",
             Efternavn: userData.data.Efternavn || "",
@@ -94,7 +93,17 @@ export default function Dashboard() {
             IsAdmin: userData.data.IsAdmin || false,
             IsDeveloper: userData.data.IsDeveloper || false,
             HashedPassword: userData.data.HashedPassword || ""
-          })
+          }
+          
+          setUserMetadata(metaData)
+          
+          // Initialize newTicket with user data
+          setNewTicket(prevState => ({
+            ...prevState,
+            name: `${metaData.Fornavn} ${metaData.Efternavn}`,
+            email: metaData.Mail,
+            phone: metaData.Phone,
+          }))
         } catch (error) {
           console.error("Failed to parse user cookie:", error)
           router.push("./login")
@@ -115,12 +124,10 @@ export default function Dashboard() {
     }
   }, [router])
   
-  // Use an additional useEffect to log userMetadata after it updates
   useEffect(() => {
     console.log("User metadata updated:", userMetadata)
   }, [userMetadata])
   
-
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
       .from("Medarbejdere")
@@ -173,12 +180,12 @@ export default function Dashboard() {
 
     const ticketData = {
       TicketNavn: newTicket.ticketTitle,
-      Navn: newTicket.createdFor === "self" ? userMetadata.Fornavn : newTicket.name,
+      Navn: newTicket.name,
       EnhedsOplysning: newTicket.deviceOrBrowser,
       Fejlkode: newTicket.errorCode,
       Beskrivelse: newTicket.description,
-      Phone: newTicket.createdFor === "self" ? userMetadata.Phone : newTicket.phone,
-      Email: newTicket.createdFor === "self" ? userMetadata.Mail : newTicket.email,
+      Phone: newTicket.phone,
+      Email: newTicket.email,
     }
 
     const { data, error } = await supabase
@@ -211,7 +218,6 @@ export default function Dashboard() {
   }
 
   const handleCreateUser = async () => {
-    // Hash the password before setting it
     const hashedPassword = await bcrypt.hash(newUser.HashedPassword, 10)
     
     console.log(hashedPassword)
@@ -270,100 +276,102 @@ export default function Dashboard() {
               <SheetTitle>Members List</SheetTitle>
               <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
             </SheetHeader>
-            <ScrollArea className="h-[85%] mt-4 space-y-4">
-              {medarbejdere.map((employee) => (
-                <Card key={employee.id} className="my-4">
-                  <CardHeader>
-                    <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
-                    <CardDescription>Department: {employee.Department}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Email: {employee.Mail}</p>
-                    <p>Phone: {employee.Phone}</p>
-                    <p>Is Supporter: {employee.IsSupporter ? "Yes" : "No"}</p>
-                    <p>Is Admin: {employee.IsAdmin ? "Yes" : "No"}</p>
-                    <p>Is Developer: {employee.IsDeveloper ? "Yes" : "No"}</p>
-                  </CardContent>
-                </Card>
-              ))}
+            <ScrollArea className="h-[calc(100vh-200px)] mt-4 pr-4">
+              <div className="space-y-4">
+                {medarbejdere.map((employee) => (
+                  <Card key={employee.id}>
+                    <CardHeader>
+                      <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
+                      <CardDescription>Department: {employee.Department}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Email: {employee.Mail}</p>
+                      <p>Phone: {employee.Phone}</p>
+                      <p>Is Supporter: {employee.IsSupporter ? "Yes" : "No"}</p>
+                      <p>Is Admin: {employee.IsAdmin ? "Yes" : "No"}</p>
+                      <p>Is Developer: {employee.IsDeveloper ? "Yes" : "No"}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </ScrollArea>
             {(userMetadata.IsAdmin || userMetadata.IsDeveloper) && (
-            <div className="mt-4">
-              <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button variant="" className="w-full mt-4">Create User</Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Create New User</AlertDialogTitle>
-                    <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <div className="space-y-4">
-                    <Input
-                      placeholder="First Name"
-                      value={newUser.Fornavn}
-                      onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Last Name"
-                      value={newUser.Efternavn}
-                      onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Department"
-                      value={newUser.Department}
-                      onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Email"
-                      type="email"
-                      value={newUser.Mail}
-                      onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Phone"
-                      type="tel"
-                      value={newUser.Phone}
-                      onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
-                    />
-                    <Input
-                      placeholder="Password"
-                      type="password"
-                      value={newUser.HashedPassword}
-                      onChange={(e) => setNewUser({ ...newUser, HashedPassword: e.target.value })}
-                    />
-                    <div className="flex gap-4">
-                      <Label>
-                        <Input
-                          type="checkbox"
-                          checked={newUser.IsSupporter}
-                          onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
-                        /> Supporter
-                      </Label>
-                      <Label>
-                        <Input
-                          type="checkbox"
-                          checked={newUser.IsAdmin}
-                          onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
-                        /> Admin
-                      </Label>
-                      <Label>
-                        <Input
-                          type="checkbox"
-                          checked={newUser.IsDeveloper}
-                          onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
-                        /> Developer
-                      </Label>
+              <div className="mt-4">
+                <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="default" className="w-full mt-4">Create User</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Create New User</AlertDialogTitle>
+                      <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4">
+                      <Input
+                        placeholder="First Name"
+                        value={newUser.Fornavn}
+                        onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Last Name"
+                        value={newUser.Efternavn}
+                        onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Department"
+                        value={newUser.Department}
+                        onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Email"
+                        type="email"
+                        value={newUser.Mail}
+                        onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Phone"
+                        type="tel"
+                        value={newUser.Phone}
+                        onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
+                      />
+                      <Input
+                        placeholder="Password"
+                        type="password"
+                        value={newUser.HashedPassword}
+                        onChange={(e) => setNewUser({ ...newUser, HashedPassword: e.target.value })}
+                      />
+                      <div className="flex gap-4">
+                        <Label>
+                          <Input
+                            type="checkbox"
+                            checked={newUser.IsSupporter}
+                            onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
+                          /> Supporter
+                        </Label>
+                        <Label>
+                          <Input
+                            type="checkbox"
+                            checked={newUser.IsAdmin}
+                            onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
+                          /> Admin
+                        </Label>
+                        <Label>
+                          <Input
+                            type="checkbox"
+                            checked={newUser.IsDeveloper}
+                            onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
+                          /> Developer
+                        </Label>
+                      </div>
                     </div>
-                  </div>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </SheetContent>
         </Sheet>
       </div>
@@ -385,21 +393,21 @@ export default function Dashboard() {
                   value={newTicket.createdFor}
                   onValueChange={(value) => {
                     if (value === "self") {
-                      setNewTicket({
-                        ...newTicket,
+                      setNewTicket(prevState => ({
+                        ...prevState,
                         createdFor: value,
-                        name: userMetadata.Fornavn || "",
-                        email: userMetadata.Mail || "",
-                        phone: userMetadata.Phone || "",
-                      })
+                        name: `${userMetadata.Fornavn} ${userMetadata.Efternavn}`,
+                        email: userMetadata.Mail,
+                        phone: userMetadata.Phone,
+                      }))
                     } else {
-                      setNewTicket({
-                        ...newTicket,
+                      setNewTicket(prevState => ({
+                        ...prevState,
                         createdFor: value,
                         name: "",
                         email: "",
                         phone: "",
-                      })
+                      }))
                     }
                   }}
                 >
@@ -421,17 +429,16 @@ export default function Dashboard() {
                   onChange={(e) => setNewTicket({ ...newTicket, ticketTitle: e.target.value })}
                 />
               </div>
-              {newTicket.createdFor === "customer" && (
-                <div className="space-y-2">
-                  <Label htmlFor="name">Customer Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Customer's name"
-                    value={newTicket.name}
-                    onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
-                  />
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Name"
+                  value={newTicket.name}
+                  onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
+                  readOnly={newTicket.createdFor === "self"}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email {newTicket.createdFor === "customer" && "(Optional if phone is provided)"}</Label>
                 <Input
@@ -463,7 +470,7 @@ export default function Dashboard() {
                   onChange={(e) => setNewTicket({ ...newTicket, deviceOrBrowser: e.target.value })}
                 />
               </div>
-              <div  className="space-y-2">
+              <div className="space-y-2">
                 <Label htmlFor="errorCode">Error Code (If provided)</Label>
                 <Input
                   id="errorCode"
