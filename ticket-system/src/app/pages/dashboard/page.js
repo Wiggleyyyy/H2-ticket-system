@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import {
   Card,
   CardContent,
@@ -34,9 +35,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { PlusCircle, Ticket, List } from "lucide-react"
+import { PlusCircle, Ticket, List, MoreVertical, CheckCircle2, Clock, XCircle } from "lucide-react"
 import { supabase } from "@/app/utils/supabase/client"
 
 export default function Dashboard() {
@@ -186,6 +193,8 @@ export default function Dashboard() {
       Beskrivelse: newTicket.description,
       Phone: newTicket.phone,
       Email: newTicket.email,
+      Done: false,
+      Ongoing: false,
     }
 
     const { data, error } = await supabase
@@ -256,6 +265,39 @@ export default function Dashboard() {
       })
       setIsCreateUserOpen(false)
       fetchMedarbejdere()
+    }
+  }
+
+  const handleStatusChange = async (ticketId, status) => {
+    const updates = {}
+    if (status === 'ongoing') {
+      updates.Ongoing = true
+      updates.Done = false
+    } else if (status === 'done') {
+      updates.Done = true
+      updates.Ongoing = false
+    } else {
+      updates.Done = false
+      updates.Ongoing = false
+    }
+
+    const { error } = await supabase
+      .from('Tickets')
+      .update(updates)
+      .eq('id', ticketId)
+
+    if (error) {
+      toast({
+        title: "Error updating ticket status",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Status updated",
+        description: "Ticket status has been updated successfully.",
+      })
+      fetchTickets() // Refresh tickets after update
     }
   }
 
@@ -504,28 +546,73 @@ export default function Dashboard() {
             <CardDescription>View and manage your recent tickets.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {tickets.map((ticket) => (
-                <Card key={ticket.id}>
-                  <CardHeader>
-                    <CardTitle>{ticket.TicketNavn}</CardTitle>
-                    <CardDescription>
-                      Created for: {ticket.Navn}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{ticket.Beskrivelse}</p>
-                    <p className="text-xs mt-2">Device/Browser: {ticket.EnhedsOplysning}</p>
-                    {ticket.Fejlkode && <p className="text-xs">Error Code: {ticket.Fejlkode}</p>}
-                  </CardContent>
-                  <CardFooter>
-                    <p className="text-xs text-muted-foreground">
-                      Created at: {new Date(ticket.created_at).toLocaleString()}
-                    </p>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            <ScrollArea className="h-[90dvh] pr-4">
+              <div className="space-y-4">
+                {tickets.map((ticket) => (
+                  <Card key={ticket.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle>{ticket.TicketNavn}</CardTitle>
+                          <CardDescription>
+                            Created for: {ticket.Navn}
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {ticket.Done && (
+                            <Badge variant="secondary" className="bg-green-500 text-white">
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Completed
+                            </Badge>
+                          )}
+                          {ticket.Ongoing && (
+                            <Badge variant="secondary" className="bg-yellow-500 text-white">
+                              <Clock className="w-4 h-4 mr-1" />
+                              In Progress
+                            </Badge>
+                          )}
+                          {!ticket.Done && !ticket.Ongoing && (
+                            <Badge variant="secondary">
+                              <XCircle className="w-4 h-4 mr-1" />
+                              Open
+                            </Badge>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'open')}>
+                                Mark as Open
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'ongoing')}>
+                                Mark as In Progress
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'done')}>
+                                Mark as Completed
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm">{ticket.Beskrivelse}</p>
+                      <p className="text-xs mt-2">Device/Browser: {ticket.EnhedsOplysning}</p>
+                      {ticket.Fejlkode && <p className="text-xs">Error Code: {ticket.Fejlkode}</p>}
+                    </CardContent>
+                    <CardFooter>
+                      <p className="text-xs text-muted-foreground">
+                        Created at: {new Date(ticket.created_at).toLocaleString()}
+                      </p>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </div>
