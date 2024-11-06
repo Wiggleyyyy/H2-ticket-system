@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import bcrypt from "bcryptjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -36,6 +37,7 @@ import {
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { PlusCircle, Ticket, List } from "lucide-react"
 import { supabase } from "@/app/utils/supabase/client"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -62,7 +64,7 @@ export default function Dashboard() {
     IsSupporter: false,
     IsAdmin: false,
     IsDeveloper: false,
-    HashedPassw: "",
+    HashedPassword: "",
   })
   const [error, setError] = useState("")
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
@@ -209,9 +211,19 @@ export default function Dashboard() {
   }
 
   const handleCreateUser = async () => {
+    // Hash the password before setting it
+    const hashedPassword = await bcrypt.hash(newUser.HashedPassword, 10)
+    
+    console.log(hashedPassword)
+
+    const userToSave = {
+      ...newUser,
+      HashedPassword: hashedPassword,
+    }
+
     const { data, error } = await supabase
       .from("Medarbejdere")
-      .insert([newUser])
+      .insert([userToSave])
       .select()
 
     if (error) {
@@ -234,7 +246,7 @@ export default function Dashboard() {
         IsSupporter: false,
         IsAdmin: false,
         IsDeveloper: false,
-        HashedPassw: "",
+        HashedPassword: "",
       })
       setIsCreateUserOpen(false)
       fetchMedarbejdere()
@@ -258,9 +270,9 @@ export default function Dashboard() {
               <SheetTitle>Members List</SheetTitle>
               <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
             </SheetHeader>
-            <div className="mt-4 space-y-4">
+            <ScrollArea className="h-[85%] mt-4 space-y-4">
               {medarbejdere.map((employee) => (
-                <Card key={employee.id}>
+                <Card key={employee.id} className="my-4">
                   <CardHeader>
                     <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
                     <CardDescription>Department: {employee.Department}</CardDescription>
@@ -274,12 +286,12 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </ScrollArea>
             {(userMetadata.IsAdmin || userMetadata.IsDeveloper) && (
             <div className="mt-4">
               <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
                 <AlertDialogTrigger asChild>
-                  <Button variant="primary" className="w-full mt-4">Create User</Button>
+                  <Button variant="" className="w-full mt-4">Create User</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
@@ -317,8 +329,8 @@ export default function Dashboard() {
                     <Input
                       placeholder="Password"
                       type="password"
-                      value={newUser.HashedPassw}
-                      onChange={(e) => setNewUser({ ...newUser, HashedPassw: e.target.value })}
+                      value={newUser.HashedPassword}
+                      onChange={(e) => setNewUser({ ...newUser, HashedPassword: e.target.value })}
                     />
                     <div className="flex gap-4">
                       <Label>
@@ -344,6 +356,10 @@ export default function Dashboard() {
                       </Label>
                     </div>
                   </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
+                  </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
             </div>
