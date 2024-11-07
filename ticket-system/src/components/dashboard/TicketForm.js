@@ -125,7 +125,6 @@ export default function TicketForm({ userMetadata, onTicketCreated }) {
           placeholder="Name"
           value={newTicket.name}
           onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
-          readOnly={newTicket.createdFor === "self"}
         />
       </div>
       <div className="space-y-2">
@@ -136,7 +135,6 @@ export default function TicketForm({ userMetadata, onTicketCreated }) {
           placeholder="Email address"
           value={newTicket.email}
           onChange={(e) => setNewTicket({ ...newTicket, email: e.target.value })}
-          readOnly={newTicket.createdFor === "self"}
         />
       </div>
       <div className="space-y-2">
@@ -147,7 +145,6 @@ export default function TicketForm({ userMetadata, onTicketCreated }) {
           placeholder="Example: +45 01 23 45 67"
           value={newTicket.phone}
           onChange={(e) => setNewTicket({ ...newTicket, phone: e.target.value })}
-          readOnly={newTicket.createdFor === "self"}
         />
       </div>
       <div className="space-y-2">
