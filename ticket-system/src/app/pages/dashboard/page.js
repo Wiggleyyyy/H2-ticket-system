@@ -12,6 +12,7 @@ import TicketList from "@/components/dashboard/TicketList";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { supabase } from "@/app/utils/supabase/client";
 import { PlusCircle, Ticket, MoreVertical, CheckCircle2, Clock, XCircle, Trash2, MessageSquare, List, LogOut  } from "lucide-react"
+import { MetadataBoundary } from "next/dist/lib/metadata/metadata-boundary";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const [medarbejdere, setMedarbejdere] = useState([]);
   const [userMetadata, setUserMetadata] = useState({});
   const [workerTicketCounts, setWorkerTicketCounts] = useState({});
+  const [ticketNotes, setTicketNotes] = useState({})
 
   // Fetch data and handle login/logout
   useEffect(() => {
@@ -29,18 +31,40 @@ export default function Dashboard() {
         acc[key] = decodeURIComponent(value);
         return acc;
       }, {});
-      
+  
       if (cookies.user) {
-        const userData = JSON.parse(cookies.user);
-        setUserMetadata(userData.data);
+        try {
+          const userData = JSON.parse(cookies.user);
+          
+          const metaData = {
+            id: userData.data.id || null,
+            Fornavn: userData.data.Fornavn || "",
+            Efternavn: userData.data.Efternavn || "",
+            Department: userData.data.Department || "",
+            Mail: userData.data.Mail || "",
+            Phone: userData.data.Phone || "",
+            IsSupporter: userData.data.IsSupporter || false,
+            IsAdmin: userData.data.IsAdmin || false,
+            IsDeveloper: userData.data.IsDeveloper || false,
+          };
+
+          setUserMetadata(metaData);
+          
+        } catch (error) {
+          console.error("Failed to parse user cookie:", error);
+          router.push("/pages/login");
+        }
       } else {
-        router.push("./login");
+        router.push("/pages/login");
       }
     };
+  
     getUserFromCookie();
     fetchMedarbejdere();
     fetchTickets();
+    fetchTicketNotes();
   }, [router]);
+  
 
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
@@ -72,6 +96,30 @@ export default function Dashboard() {
       })
     } else {
       setTickets(data)
+    }
+  }
+
+  const fetchTicketNotes = async () => {
+    const { data, error } = await supabase
+      .from("TicketNotes")
+      .select("*")
+      .order("created_at", { ascending: false })
+  
+    if (error) {
+      toast({
+        title: "Error fetching notes",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      const notesByTicket = data.reduce((acc, note) => {
+        if (!acc[note.TicketId]) {
+          acc[note.TicketId] = []
+        }
+        acc[note.TicketId].push(note)
+        return acc
+      }, {})
+      setTicketNotes(notesByTicket)
     }
   }
 
@@ -122,11 +170,14 @@ export default function Dashboard() {
         {/* Ticket List Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Tickets</CardTitle>
+            <CardTitle className="flex items-center gap-2"> 
+              <Ticket className="h-6 w-6" />
+              Recent Tickets
+            </CardTitle>
             <CardDescription>View and manage your recent tickets.</CardDescription>
           </CardHeader>
           <CardContent>
-            <TicketList tickets={tickets} medarbejdere={medarbejdere} />
+            <TicketList tickets={tickets} medarbejdere={medarbejdere} ticketNotes={ticketNotes} userMetadata={userMetadata} fetchTicketNotes={fetchTicketNotes}/>
           </CardContent>
         </Card>
       </div>
