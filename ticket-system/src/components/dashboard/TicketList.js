@@ -6,7 +6,7 @@ import TicketCard from "./TicketCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/app/utils/supabase/client";
 
-export default function TicketList({ tickets, medarbejdere, ticketNotes, userMetadata, fetchTicketNotes, handleAssignWorker }) {
+export default function TicketList({ tickets, medarbejdere, ticketNotes, userMetadata, fetchTicketNotes, handleAssignWorker, handleStatusChange }) {
   const [newNotes, setNewNotes] = useState({});
   const { toast } = useToast();
 
@@ -69,6 +69,7 @@ export default function TicketList({ tickets, medarbejdere, ticketNotes, userMet
           newNotes={newNotes}
           setNewNotes={setNewNotes}
           handleAssignWorker={handleAssignWorker}
+          handleStatusChange={handleStatusChange}
         />
       ))}
     </ScrollArea>

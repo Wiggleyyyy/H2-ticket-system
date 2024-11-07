@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function TicketCard({ ticket, medarbejdere, ticketNotes, userMetadata, handleAddNote, handleDeleteNote, newNotes, setNewNotes, handleAssignWorker }) {
+export default function TicketCard({ ticket, medarbejdere, ticketNotes, userMetadata, handleAddNote, handleDeleteNote, newNotes, setNewNotes, handleAssignWorker, handleStatusChange }) {
   const handleNoteChange = (ticketId, value) => {
     setNewNotes((prev) => ({ ...prev, [ticketId]: value }));
   };

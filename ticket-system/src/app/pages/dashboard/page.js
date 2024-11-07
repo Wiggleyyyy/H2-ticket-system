@@ -205,6 +205,39 @@ export default function Dashboard() {
     }
   }
 
+  const handleStatusChange = async (ticketId, status) => {
+    const updates = {}
+    if (status === 'ongoing') {
+      updates.Ongoing = true
+      updates.Done = false
+    } else if (status === 'done') {
+      updates.Done = true
+      updates.Ongoing = false
+    } else {
+      updates.Done = false
+      updates.Ongoing = false
+    }
+
+    const { error } = await supabase
+      .from('Tickets')
+      .update(updates)
+      .eq('id', ticketId)
+
+    if (error) {
+      toast({
+        title: "Error updating ticket status",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Status updated",
+        description: "Ticket status has been updated successfully.",
+      })
+      fetchTickets()
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -254,7 +287,7 @@ export default function Dashboard() {
             <CardDescription>View and manage your recent tickets.</CardDescription>
           </CardHeader>
           <CardContent>
-            <TicketList tickets={tickets} medarbejdere={medarbejdere} ticketNotes={ticketNotes} userMetadata={userMetadata} fetchTicketNotes={fetchTicketNotes} handleAssignWorker={handleAssignWorker}/>
+            <TicketList tickets={tickets} medarbejdere={medarbejdere} ticketNotes={ticketNotes} userMetadata={userMetadata} fetchTicketNotes={fetchTicketNotes} handleAssignWorker={handleAssignWorker} handleStatusChange={handleStatusChange}/>
           </CardContent>
         </Card>
       </div>
