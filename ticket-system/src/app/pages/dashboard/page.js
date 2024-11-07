@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { PlusCircle, Ticket, List, MoreVertical, CheckCircle2, Clock, XCircle, Trash2 } from "lucide-react"
+import { PlusCircle, Ticket, List, MoreVertical, CheckCircle2, Clock, XCircle, Trash2, MessageSquare, LogOut } from "lucide-react"
 import { supabase } from "@/app/utils/supabase/client"
 
 export default function Dashboard() {
@@ -61,7 +61,7 @@ export default function Dashboard() {
     errorCode: "",
     deviceOrBrowser: "",
     createdFor: "self",
-    MedarbejderId: "", // changed from assignedTo
+    MedarbejderId: "",
   })
   const [newUser, setNewUser] = useState({
     Fornavn: "",
@@ -76,6 +76,9 @@ export default function Dashboard() {
   })
   const [error, setError] = useState("")
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false)
+  const [newNotes, setNewNotes] = useState({})
+  const [ticketNotes, setTicketNotes] = useState({})
+  const [workerTicketCounts, setWorkerTicketCounts] = useState({})
 
   useEffect(() => {
     const getUserFromCookie = () => {
@@ -105,7 +108,6 @@ export default function Dashboard() {
           
           setUserMetadata(metaData)
           
-          // Initialize newTicket with user data
           setNewTicket(prevState => ({
             ...prevState,
             name: `${metaData.Fornavn} ${metaData.Efternavn}`,
@@ -125,6 +127,7 @@ export default function Dashboard() {
     getUserFromCookie()
     fetchMedarbejdere()
     fetchTickets()
+    fetchTicketNotes()
     subscribeToTickets()
   
     return () => {
@@ -135,6 +138,10 @@ export default function Dashboard() {
   useEffect(() => {
     console.log("User metadata updated:", userMetadata)
   }, [userMetadata])
+
+  useEffect(() => {
+    updateWorkerTicketCounts()
+  }, [tickets, medarbejdere])
   
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
@@ -169,6 +176,30 @@ export default function Dashboard() {
     }
   }
 
+  const fetchTicketNotes = async () => {
+    const { data, error } = await supabase
+      .from("TicketNotes")
+      .select("*")
+      .order("created_at", { ascending: false })
+  
+    if (error) {
+      toast({
+        title: "Error fetching notes",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      const notesByTicket = data.reduce((acc, note) => {
+        if (!acc[note.TicketId]) {
+          acc[note.TicketId] = []
+        }
+        acc[note.TicketId].push(note)
+        return acc
+      }, {})
+      setTicketNotes(notesByTicket)
+    }
+  }
+
   const subscribeToTickets = () => {
     supabase
       .channel('Tickets')
@@ -176,6 +207,16 @@ export default function Dashboard() {
         setTickets(currentTickets => [payload.new, ...currentTickets])
       })
       .subscribe()
+  }
+
+  const updateWorkerTicketCounts = () => {
+    const counts = {}
+    tickets.forEach(ticket => {
+      if (ticket.MedarbejderId) {
+        counts[ticket.MedarbejderId] = (counts[ticket.MedarbejderId] || 0) + 1
+      }
+    })
+    setWorkerTicketCounts(counts)
   }
 
   const handleCreateTicket = async (e) => {
@@ -196,7 +237,7 @@ export default function Dashboard() {
       Email: newTicket.email,
       Done: false,
       Ongoing: false,
-      MedarbejderId: newTicket.MedarbejderId, // changed from assignedTo
+      MedarbejderId: newTicket.MedarbejderId,
     }
     
 
@@ -225,8 +266,9 @@ export default function Dashboard() {
         errorCode: "",
         deviceOrBrowser: "",
         createdFor: "self",
-        assignedTo: "",
+        MedarbejderId: "",
       })
+      fetchTickets()
     }
   }
 
@@ -301,7 +343,7 @@ export default function Dashboard() {
         title: "Status updated",
         description: "Ticket status has been updated successfully.",
       })
-      fetchTickets() // Refresh tickets after update
+      fetchTickets()
     }
   }
 
@@ -322,14 +364,14 @@ export default function Dashboard() {
         title: "Ticket deleted",
         description: "The ticket has been successfully deleted.",
       })
-      fetchTickets() // Refresh tickets after deletion
+      fetchTickets()
     }
   }
 
   const handleAssignWorker = async (ticketId, workerId) => {
     const { error } = await supabase
       .from('Tickets')
-      .update({ MedarbejderId: workerId }) // changed from assignedTo
+      .update({ MedarbejderId: workerId })
       .eq('id', ticketId)
   
     if (error) {
@@ -343,126 +385,186 @@ export default function Dashboard() {
         title: "Worker assigned",
         description: "The worker has been successfully assigned to the ticket.",
       })
-      fetchTickets() // Refresh tickets after assignment
+      fetchTickets()
     }
   }
+
+  const handleAddNote = async (ticketId) => {
+    if (!newNotes[ticketId]?.trim()) return
   
+    const noteData = {
+      TicketId: ticketId,
+      MedarbejderId: userMetadata.id,
+      Note: newNotes[ticketId].trim()
+    }
+  
+    const { error } = await supabase
+      .from("TicketNotes")
+      .insert([noteData])
+  
+    if (error) {
+      toast({
+        title: "Error adding note",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Note added",
+        description: "Your note has been added successfully.",
+      })
+      setNewNotes(prev => ({ ...prev, [ticketId]: "" }))
+      fetchTicketNotes()
+    }
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    const { error } = await supabase
+      .from("TicketNotes")
+      .delete()
+      .eq('id', noteId)
+
+    if (error) {
+      toast({
+        title: "Error deleting note",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Note deleted",
+        description: "The note has been successfully deleted.",
+      })
+      fetchTicketNotes()
+    }
+  }
+
+  const handleLogout = () => {
+    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    router.push("./login")
+  }
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Worker Dashboard</h1>
-
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2">
-              <List className="h-5 w-5" />
-              Members
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Members List</SheetTitle>
-              <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="h-[calc(100vh-200px)] mt-4 pr-4">
-              <div className="space-y-4">
-                {medarbejdere.map((employee) => (
-                  <Card key={employee.id}>
-                    <CardHeader>
-                      <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
-                      <CardDescription>Department: {employee.Department}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p>Email: {employee.Mail}</p>
-                      <p>Phone: {employee.Phone}</p>
-                      <p>Is Supporter: {employee.IsSupporter ? "Yes" : "No"}</p>
-                      <p>Is Admin: {employee.IsAdmin ? "Yes" : "No"}</p>
-                      <p>Is Developer: {employee.IsDeveloper ? "Yes" : "No"}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-            {(userMetadata.IsAdmin || userMetadata.IsDeveloper) && (
-              <div className="mt-4">
-                <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="default" className="w-full mt-4">Create User</Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Create New User</AlertDialogTitle>
-                      <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <div className="space-y-4">
-                      <Input
-                        placeholder="First Name"
-                        value={newUser.Fornavn}
-                        onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Last Name"
-                        value={newUser.Efternavn}
-                        onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Department"
-                        value={newUser.Department}
-                        onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Email"
-                        type="email"
-                        value={newUser.Mail}
-                        onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Phone"
-                        type="tel"
-                        value={newUser.Phone}
-                        onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Password"
-                        type="password"
-                        value={newUser.HashedPassword}
-                        onChange={(e) => setNewUser({ ...newUser, HashedPassword: e.target.value })}
-                      />
-                      <div className="flex gap-4">
-                        <Label>
-                          <Input
-                            type="checkbox"
-                            checked={newUser.IsSupporter}
-                            onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
-                          /> Supporter
-                        </Label>
-                        <Label>
-                          <Input
-                            type="checkbox"
-                            checked={newUser.IsAdmin}
-                            onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
-                          /> Admin
-                        </Label>
-                        <Label>
-                          <Input
-                            type="checkbox"
-                            checked={newUser.IsDeveloper}
-                            onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
-                          /> Developer
-                        </Label>
+        <div className="flex items-center gap-4">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2">
+                <List className="h-5 w-5" />
+                Members
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Members List</SheetTitle>
+                <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
+              </SheetHeader>
+              <ScrollArea className="h-[calc(100vh-200px)] mt-4 pr-4">
+                <div className="space-y-4">
+                  {medarbejdere.map((employee) => (
+                    <Card key={employee.id}>
+                      <CardHeader>
+                        <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
+                        <CardDescription>Department: {employee.Department}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p>Email: {employee.Mail}</p>
+                        <p>Phone: {employee.Phone}</p>
+                        <p>Is Supporter: {employee.IsSupporter ? "Yes" : "No"}</p>
+                        <p>Is Admin: {employee.IsAdmin ? "Yes" : "No"}</p>
+                        <p>Is Developer: {employee.IsDeveloper ? "Yes" : "No"}</p>
+                        <p>Assigned Tickets: {workerTicketCounts[employee.id] || 0}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
+              {(userMetadata.IsAdmin || userMetadata.IsDeveloper) && (
+                <div className="mt-4">
+                  <AlertDialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="default" className="w-full mt-4">Create User</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Create New User</AlertDialogTitle>
+                        <AlertDialogDescription>Fill in the details to create a new employee.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="space-y-4">
+                        <Input
+                          placeholder="First Name"
+                          value={newUser.Fornavn}
+                          onChange={(e) => setNewUser({ ...newUser, Fornavn: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Last Name"
+                          value={newUser.Efternavn}
+                          onChange={(e) => setNewUser({ ...newUser, Efternavn: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Department"
+                          value={newUser.Department}
+                          onChange={(e) => setNewUser({ ...newUser, Department: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Email"
+                          type="email"
+                          value={newUser.Mail}
+                          onChange={(e) => setNewUser({ ...newUser, Mail: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Phone"
+                          type="tel"
+                          value={newUser.Phone}
+                          onChange={(e) => setNewUser({ ...newUser, Phone: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Password"
+                          type="password"
+                          value={newUser.HashedPassword}
+                          onChange={(e) => setNewUser({ ...newUser, HashedPassword: e.target.value })}
+                        />
+                        <div className="flex gap-4">
+                          <Label>
+                            <Input
+                              type="checkbox"
+                              checked={newUser.IsSupporter}
+                              onChange={(e) => setNewUser({ ...newUser, IsSupporter: e.target.checked })}
+                            /> Supporter
+                          </Label>
+                          <Label>
+                            <Input
+                              type="checkbox"
+                              checked={newUser.IsAdmin}
+                              onChange={(e) => setNewUser({ ...newUser, IsAdmin: e.target.checked })}
+                            /> Admin
+                          </Label>
+                          <Label>
+                            <Input
+                              type="checkbox"
+                              checked={newUser.IsDeveloper}
+                              onChange={(e) => setNewUser({ ...newUser, IsDeveloper: e.target.checked })}
+                            /> Developer
+                          </Label>
+                        </div>
                       </div>
-                    </div>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-          </SheetContent>
-        </Sheet>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCreateUser}>Create User</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+            <LogOut className="h-5 w-5" />
+            Logout
+          </Button>
+        </div>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
@@ -581,7 +683,7 @@ export default function Dashboard() {
               <div className="space-y-2">
                 <Label htmlFor="assignedTo">Assign To</Label>
                 <Select
-                  value={newTicket.MedarbejderId} // changed from assignedTo
+                  value={newTicket.MedarbejderId}
                   onValueChange={(value) => setNewTicket({ ...newTicket, MedarbejderId: value })}
                 >
                   <SelectTrigger>
@@ -611,7 +713,7 @@ export default function Dashboard() {
             <CardDescription>View and manage your recent tickets.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[90dvh] pr-4">
+            <ScrollArea className="h-[75dvh] pr-4">
               <div className="space-y-4">
                 {tickets.map((ticket) => (
                   <Card key={ticket.id}>
@@ -674,10 +776,10 @@ export default function Dashboard() {
                       <p className="text-sm">{ticket.Beskrivelse}</p>
                       <p className="text-xs mt-2">Device/Browser: {ticket.EnhedsOplysning}</p>
                       {ticket.Fejlkode && <p className="text-xs">Error Code: {ticket.Fejlkode}</p>}
-                      <div className="mt-2">
+                      <div className="mt-4">
                         <Label htmlFor={`worker-${ticket.id}`}>Assigned To</Label>
                         <Select
-                          value={ticket.MedarbejderId || ""} // changed from AssignedTo
+                          value={ticket.MedarbejderId || ""}
                           onValueChange={(value) => handleAssignWorker(ticket.id, value)}
                         >
                           <SelectTrigger id={`worker-${ticket.id}`}>
@@ -692,6 +794,54 @@ export default function Dashboard() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="mt-4 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          <h3 className="text-sm font-semibold">Notes</h3>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          {ticketNotes[ticket.id]?.map(note => {
+                            const worker = medarbejdere.find(m => m.id === note.MedarbejderId)
+                            return (
+                              <div key={note.id} className="bg-muted p-3 rounded-lg space-y-1">
+                                <div className="flex justify-between items-start">
+                                  <p className="text-sm">{note.Note}</p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteNote(note.id)}
+                                    className="h-6 w-6"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Delete note</span>
+                                  </Button>
+                                </div>
+                                <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                  <span>{worker ? `${worker.Fornavn} ${worker.Efternavn}` : 'Unknown Worker'}</span>
+                                  <span>{new Date(note.created_at).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Textarea
+                            placeholder="Add a note..."
+                            value={newNotes[ticket.id] || ""}
+                            onChange={(e) => setNewNotes(prev => ({ ...prev, [ticket.id]: e.target.value }))}
+                            className="min-h-[80px]"
+                          />
+                          <Button 
+                            onClick={() => handleAddNote(ticket.id)}
+                            className="shrink-0"
+                          >
+                            Add Note
+                          </Button>
+                        </div>
+                      </div>
+
                     </CardContent>
                     <CardFooter>
                       <p className="text-xs text-muted-foreground">
