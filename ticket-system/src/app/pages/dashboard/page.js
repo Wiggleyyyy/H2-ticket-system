@@ -50,6 +50,7 @@ export default function Dashboard() {
 
           setUserMetadata(metaData);
           
+
         } catch (error) {
           console.error("Failed to parse user cookie:", error);
           router.push("/pages/login");
@@ -65,6 +66,9 @@ export default function Dashboard() {
     fetchTicketNotes();
   }, [router]);
   
+  useEffect(() => {
+    updateWorkerTicketCounts()
+  }, [tickets, medarbejdere])
 
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
@@ -128,6 +132,58 @@ export default function Dashboard() {
     router.push("./login");
   };
 
+  const updateWorkerTicketCounts = () => {
+    const counts = {}
+    tickets.forEach(ticket => {
+      if (ticket.MedarbejderId) {
+        counts[ticket.MedarbejderId] = (counts[ticket.MedarbejderId] || 0) + 1
+      }
+    })
+    setWorkerTicketCounts(counts)
+  }
+
+  const handleCreateUser = async () => {
+    const hashedPassword = await bcrypt.hash(newUser.HashedPassword, 10)
+    
+    console.log(hashedPassword)
+
+    const userToSave = {
+      ...newUser,
+      HashedPassword: hashedPassword,
+    }
+
+    const { data, error } = await supabase
+      .from("Medarbejdere")
+      .insert([userToSave])
+      .select()
+
+    if (error) {
+      toast({
+        title: "Error creating user",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "User created",
+        description: "New user has been successfully created.",
+      })
+      setNewUser({
+        Fornavn: "",
+        Efternavn: "",
+        Department: "",
+        Mail: "",
+        Phone: "",
+        IsSupporter: false,
+        IsAdmin: false,
+        IsDeveloper: false,
+        HashedPassword: "",
+      })
+      setIsCreateUserOpen(false)
+      fetchMedarbejdere()
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -135,7 +191,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
+              <Button variant="outline" className="flex items-center gap-2">
                 <List className="h-5 w-5" /> Members
               </Button>
             </SheetTrigger>
@@ -143,10 +199,10 @@ export default function Dashboard() {
               <SheetHeader>
                 <SheetTitle>Members List</SheetTitle>
               </SheetHeader>
-              <MembersList medarbejdere={medarbejdere} />
-            </SheetContent>
+              <MembersList medarbejdere={medarbejdere} userMetadata={userMetadata} workerTicketCounts={workerTicketCounts} handleCreateUser={handleCreateUser}/>
+              </SheetContent>
           </Sheet>
-          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
             <LogOut className="h-5 w-5" /> Logout
           </Button>
         </div>
