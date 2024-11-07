@@ -184,6 +184,27 @@ export default function Dashboard() {
     }
   }
 
+  const handleAssignWorker = async (ticketId, workerId) => {
+    const { error } = await supabase
+      .from('Tickets')
+      .update({ MedarbejderId: workerId })
+      .eq('id', ticketId)
+  
+    if (error) {
+      toast({
+        title: "Error assigning worker",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Worker assigned",
+        description: "The worker has been successfully assigned to the ticket.",
+      })
+      fetchTickets()
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -233,7 +254,7 @@ export default function Dashboard() {
             <CardDescription>View and manage your recent tickets.</CardDescription>
           </CardHeader>
           <CardContent>
-            <TicketList tickets={tickets} medarbejdere={medarbejdere} ticketNotes={ticketNotes} userMetadata={userMetadata} fetchTicketNotes={fetchTicketNotes}/>
+            <TicketList tickets={tickets} medarbejdere={medarbejdere} ticketNotes={ticketNotes} userMetadata={userMetadata} fetchTicketNotes={fetchTicketNotes} handleAssignWorker={handleAssignWorker}/>
           </CardContent>
         </Card>
       </div>

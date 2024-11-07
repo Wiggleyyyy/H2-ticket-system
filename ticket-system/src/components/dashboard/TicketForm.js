@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast"; // Assuming toast is imported here
 
-export default function TicketForm({ userMetadata, onTicketCreated, medarbejdere }) {
+export default function TicketForm({ userMetadata, onTicketCreated }) {
   const [error, setError] = useState("");
   const [newTicket, setNewTicket] = useState({
     ticketTitle: "",
