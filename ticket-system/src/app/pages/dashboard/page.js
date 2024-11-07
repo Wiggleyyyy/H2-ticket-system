@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { PlusCircle, Ticket, List, MoreVertical, CheckCircle2, Clock, XCircle } from "lucide-react"
+import { PlusCircle, Ticket, List, MoreVertical, CheckCircle2, Clock, XCircle, Trash2 } from "lucide-react"
 import { supabase } from "@/app/utils/supabase/client"
 
 export default function Dashboard() {
@@ -61,6 +61,7 @@ export default function Dashboard() {
     errorCode: "",
     deviceOrBrowser: "",
     createdFor: "self",
+    MedarbejderId: "", // changed from assignedTo
   })
   const [newUser, setNewUser] = useState({
     Fornavn: "",
@@ -195,7 +196,9 @@ export default function Dashboard() {
       Email: newTicket.email,
       Done: false,
       Ongoing: false,
+      MedarbejderId: newTicket.MedarbejderId, // changed from assignedTo
     }
+    
 
     const { data, error } = await supabase
       .from("Tickets")
@@ -222,6 +225,7 @@ export default function Dashboard() {
         errorCode: "",
         deviceOrBrowser: "",
         createdFor: "self",
+        assignedTo: "",
       })
     }
   }
@@ -300,6 +304,49 @@ export default function Dashboard() {
       fetchTickets() // Refresh tickets after update
     }
   }
+
+  const handleDeleteTicket = async (ticketId) => {
+    const { error } = await supabase
+      .from('Tickets')
+      .delete()
+      .eq('id', ticketId)
+
+    if (error) {
+      toast({
+        title: "Error deleting ticket",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Ticket deleted",
+        description: "The ticket has been successfully deleted.",
+      })
+      fetchTickets() // Refresh tickets after deletion
+    }
+  }
+
+  const handleAssignWorker = async (ticketId, workerId) => {
+    const { error } = await supabase
+      .from('Tickets')
+      .update({ MedarbejderId: workerId }) // changed from assignedTo
+      .eq('id', ticketId)
+  
+    if (error) {
+      toast({
+        title: "Error assigning worker",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Worker assigned",
+        description: "The worker has been successfully assigned to the ticket.",
+      })
+      fetchTickets() // Refresh tickets after assignment
+    }
+  }
+  
 
   return (
     <div className="container mx-auto p-4">
@@ -531,6 +578,24 @@ export default function Dashboard() {
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="assignedTo">Assign To</Label>
+                <Select
+                  value={newTicket.MedarbejderId} // changed from assignedTo
+                  onValueChange={(value) => setNewTicket({ ...newTicket, MedarbejderId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a worker" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {medarbejdere.map((worker) => (
+                      <SelectItem key={worker.id} value={worker.id}>
+                        {worker.Fornavn} {worker.Efternavn}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
               <Button type="submit" className="w-full">Create Ticket</Button>
             </form>
@@ -594,6 +659,12 @@ export default function Dashboard() {
                               <DropdownMenuItem onClick={() => handleStatusChange(ticket.id, 'done')}>
                                 Mark as Completed
                               </DropdownMenuItem>
+                              {ticket.Done && (
+                                <DropdownMenuItem onClick={() => handleDeleteTicket(ticket.id)}>
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete Ticket
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -603,6 +674,24 @@ export default function Dashboard() {
                       <p className="text-sm">{ticket.Beskrivelse}</p>
                       <p className="text-xs mt-2">Device/Browser: {ticket.EnhedsOplysning}</p>
                       {ticket.Fejlkode && <p className="text-xs">Error Code: {ticket.Fejlkode}</p>}
+                      <div className="mt-2">
+                        <Label htmlFor={`worker-${ticket.id}`}>Assigned To</Label>
+                        <Select
+                          value={ticket.MedarbejderId || ""} // changed from AssignedTo
+                          onValueChange={(value) => handleAssignWorker(ticket.id, value)}
+                        >
+                          <SelectTrigger id={`worker-${ticket.id}`}>
+                            <SelectValue placeholder="Select a worker" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {medarbejdere.map((worker) => (
+                              <SelectItem key={worker.id} value={worker.id}>
+                                {worker.Fornavn} {worker.Efternavn}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </CardContent>
                     <CardFooter>
                       <p className="text-xs text-muted-foreground">
