@@ -133,7 +133,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
+              <Button variant="outline" className="flex items-center gap-2">
                 <List className="h-5 w-5" />
                 Members
               </Button>
@@ -151,7 +151,7 @@ export default function Dashboard() {
               />
             </SheetContent>
           </Sheet>
-          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
             <LogOut className="h-5 w-5" />
             Logout
           </Button>
