@@ -25,7 +25,7 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
   const fetchNotes = async () => {
     const { data, error } = await supabase
       .from("TicketNotes")
-      .select("*")
+      .select("*, Medarbejdere:MedarbejderId (Fornavn, Efternavn)")
       .eq("TicketId", ticket.id)
       .order("created_at", { ascending: false })
 
@@ -34,7 +34,7 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
         title: "Error fetching notes",
         description: error.message,
         variant: "destructive",
-      })
+    })
     } else {
       setTicketNotes(data)
     }
@@ -269,6 +269,7 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
                 </div>
                 <div className="flex justify-between items-center text-xs text-muted-foreground">
                   <span>{new Date(note.created_at).toLocaleString()}</span>
+                  <p>{note.Medarbejdere.Fornavn} {note.Medarbejdere.Efternavn}</p>
                 </div>
               </div>
             ))}
