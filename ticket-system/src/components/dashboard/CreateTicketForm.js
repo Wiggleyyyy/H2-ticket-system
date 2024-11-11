@@ -47,7 +47,7 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
       Done: false,
       Ongoing: false,
       MedarbejderId: newTicket.MedarbejderId,
-      Priority: newTicket.Priority
+      Priority: newTicket.Priority,
     }
   
     const { data, error } = await supabase
