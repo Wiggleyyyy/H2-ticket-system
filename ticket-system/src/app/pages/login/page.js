@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,6 @@ import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/app/utils/supabase/client"; // Ensure this imports your Supabase client
 import { setCookie } from 'cookies-next'; // For cookie handling
-import bcrypt from "bcryptjs";
 
 export default function WorkerLogin() {
   const { toast } = useToast();
@@ -44,7 +43,7 @@ export default function WorkerLogin() {
       // Redirect to dashboard on successful login
       router.push("./dashboard/");
     }
-  };
+  }
 
   async function Login() {
     try {
@@ -64,10 +63,8 @@ export default function WorkerLogin() {
         });
       }
 
-      // Use bcrypt to compare the entered password with the hashed password in the database
-      const passwordMatch = await bcrypt.compare(password, data.HashedPassword);
-      
-      if (!passwordMatch) {
+      // Here, assume a simple password check for demonstration (not recommended for production)
+      if (password !== data.HashedPassword) {
         return toast({
           variant: "destructive",
           title: "Error logging in",
@@ -107,6 +104,7 @@ export default function WorkerLogin() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

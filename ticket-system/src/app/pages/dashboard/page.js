@@ -9,42 +9,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { PlusCircle, Ticket, List, MoreVertical, CheckCircle2, Clock, XCircle, Trash2, MessageSquare, LogOut } from "lucide-react"
 import { supabase } from "@/app/utils/supabase/client"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export default function Dashboard() {
   const router = useRouter()
@@ -465,17 +438,43 @@ export default function Dashboard() {
                 <div className="space-y-4">
                   {medarbejdere.map((employee) => (
                     <Card key={employee.id}>
-                      <CardHeader>
-                        <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
-                        <CardDescription>Department: {employee.Department}</CardDescription>
+                      <CardHeader className="flex"> 
+                        <div className="flex items-center">
+                          <Avatar className="mr-2">
+                            <AvatarImage src="" alt="@username" />
+                            <AvatarFallback>{employee.Fornavn.charAt(0)}{employee.Efternavn.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <CardTitle>{employee.Fornavn} {employee.Efternavn}</CardTitle>
+                            <CardDescription>Department: {employee.Department}</CardDescription>
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <p>Email: {employee.Mail}</p>
-                        <p>Phone: {employee.Phone}</p>
-                        <p>Is Supporter: {employee.IsSupporter ? "Yes" : "No"}</p>
-                        <p>Is Admin: {employee.IsAdmin ? "Yes" : "No"}</p>
-                        <p>Is Developer: {employee.IsDeveloper ? "Yes" : "No"}</p>
-                        <p>Assigned Tickets: {workerTicketCounts[employee.id] || 0}</p>
+                        <div className="flex items-center">
+                          <p className="font-bold mr-1">Email:</p>
+                          <p> {employee.Mail}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="font-bold mr-1">Phone:</p>
+                          <p>Phone: {employee.Phone}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="font-bold mr-1">Is Supporter:</p>
+                          <p>{employee.IsSupporter ? "Yes" : "No"}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="font-bold mr-1">Is Admin:</p>
+                          <p>{employee.IsAdmin ? "Yes" : "No"}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="font-bold mr-1">Is Developer:</p>
+                          <p>{employee.IsDeveloper ? "Yes" : "No"}</p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="font-bold mr-1">Assigned Tickets:</p>
+                          <p>{workerTicketCounts[employee.id] || 0}</p>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
