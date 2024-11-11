@@ -274,7 +274,7 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
             ))}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2">
             <Textarea
               placeholder="Add a note..."
               value={newNote}

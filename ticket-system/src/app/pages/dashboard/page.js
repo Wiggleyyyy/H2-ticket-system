@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/app/utils/supabase/client"
 import CreateTicketForm from "@/components/dashboard/CreateTicketForm"
 import TicketList from "@/components/dashboard/TicketList"
-import MembersList from "@/components/dashboard/MembersList"
+import MembersList from "@/components/dashboard/MembersList" //says error but there isnt one???
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { List, LogOut } from "lucide-react"
