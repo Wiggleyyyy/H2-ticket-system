@@ -13,6 +13,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, Clock, XCircle, Trash2, MessageSquare, MoreVertical } from "lucide-react"
 
+// Import the priority mapping if using a separate utility file
+// import { priorityMap } from "./PriorityUtils"
+
 export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMetadata }) {
   const { toast } = useToast()
   const [newNote, setNewNote] = useState("")
@@ -37,6 +40,27 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
       })
     } else {
       setTicketNotes(data)
+    }
+  }
+
+  const handlePriorityChange = async (priority) => {
+    const { error } = await supabase
+      .from('Tickets')
+      .update({ Priority: priority })
+      .eq('id', ticket.id)
+
+    if (error) {
+      toast({
+        title: "Error updating priority",
+        description: error.message,
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Priority updated",
+        description: "Ticket priority has been updated successfully.",
+      })
+      fetchTickets()
     }
   }
 
@@ -167,6 +191,27 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
     }
   }
 
+  // Helper function to get priority details
+  const getPriorityDetails = (priority) => {
+    switch (priority) {
+      case 1:
+        return { label: "1 (High)", color: "red" };
+      case 2:
+        return { label: "2", color: "orange" };
+      case 3:
+        return { label: "3", color: "yellow" };
+      case 4:
+        return { label: "4 (Low)", color: "green" };
+      default:
+        return { label: "Unknown", color: "gray" };
+    }
+  };
+
+  // Alternatively, if using priorityMap
+  // const priority = priorityMap[ticket.Priority] || { label: "Unknown", color: "gray" };
+
+  const priority = getPriorityDetails(ticket.Priority);
+
   return (
     <Card>
       <CardHeader>
@@ -176,6 +221,36 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
             <CardDescription>
               Created for: {ticket.Navn}
             </CardDescription>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Badge
+                  variant="secondary"
+                  className={`mt-2 ${
+                    priority.color === 'red' ? 'bg-red-500' :
+                    priority.color === 'orange' ? 'bg-orange-500' :
+                    priority.color === 'yellow' ? 'bg-yellow-500' :
+                    priority.color === 'green' ? 'bg-green-500' :
+                    'bg-gray-500'
+                  } text-white`}
+                >
+                  Priority: {priority.label}
+                </Badge>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {[1, 2, 3, 4].map((priorityValue) => {
+                  const option = getPriorityDetails(priorityValue)
+                  return (
+                    <DropdownMenuItem
+                      key={priorityValue}
+                      onClick={() => handlePriorityChange(priorityValue)}
+                      className={`text-${option.color}-500 hover:bg-${option.hoverColor}`}
+                    >
+                      {option.label}
+                    </DropdownMenuItem>
+                  )
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center gap-2">
             {ticket.Done && (
