@@ -24,7 +24,7 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
     deviceOrBrowser: "",
     createdFor: "self",
     MedarbejderId: "",
-    Priority: "4",
+    //Priority: 4,
   })
   const [error, setError] = useState("")
 
@@ -47,7 +47,7 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
       Done: false,
       Ongoing: false,
       MedarbejderId: newTicket.MedarbejderId,
-      Priority: newTicket.Priority
+      //Priority: newTicket.Priority
     }
 
     const { data, error } = await supabase
@@ -76,7 +76,7 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
         deviceOrBrowser: "",
         createdFor: "self",
         MedarbejderId: "",
-        Priority: "4",
+        //Priority: 4,
       })
       fetchTickets()
     }
@@ -194,22 +194,26 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
               value={newTicket.description}
               onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
             />
-            <div>
-              <Select>
-                Priority (4 to 1)
-                <SelectTrigger className="space-y-2">
-                  <SelectValue placeholder="4" />
-                </SelectTrigger>
-                <SelectContent value={newTicket.Priority} onChange={(e) => setNewTicket({ ...newTicket, Priority: e.target.value })}>
-                  <SelectItem value="1">1</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3</SelectItem>
-                  <SelectItem value="4">4</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
           </div>
+          
+          {/* <div>
+          <Select 
+            value={newTicket.Priority} 
+            onValueChange={(value) => setNewTicket({ ...newTicket, Priority: parseInt(value, 10) })}
+          >
+            Priority 4 (low) 1 (high)
+            <SelectTrigger className="space-y-2">
+              <SelectValue placeholder="4" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1</SelectItem>
+              <SelectItem value="2">2</SelectItem>
+              <SelectItem value="3">3</SelectItem>
+              <SelectItem value="4">4</SelectItem>
+            </SelectContent>
+          </Select>
+          </div> */}
+
           <div className="space-y-2">
             <Label htmlFor="assignedTo">Assign To</Label>
             <Select
