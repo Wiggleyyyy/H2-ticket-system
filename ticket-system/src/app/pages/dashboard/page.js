@@ -1,83 +1,61 @@
-// components/Dashboard/Dashboard.js
-"use client"
+// Dashboard.js
+'use client'
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import MembersList from "@/components/dashboard/MembersList";
-import TicketForm from "@/components/dashboard/TicketForm";
-import TicketList from "@/components/dashboard/TicketList";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { supabase } from "@/app/utils/supabase/client";
-import { PlusCircle, Ticket, MoreVertical, CheckCircle2, Clock, XCircle, Trash2, MessageSquare, List, LogOut  } from "lucide-react"
-import { MetadataBoundary } from "next/dist/lib/metadata/metadata-boundary";
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
+import { supabase } from "@/app/utils/supabase/client"
+import CreateTicketForm from "@/components/dashboard/CreateTicketForm"
+import TicketList from "@/components/dashboard/TicketList"
+import MembersList from "@/components/dashboard/MembersList"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { List, LogOut } from "lucide-react"
 
 export default function Dashboard() {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [tickets, setTickets] = useState([]);
-  const [medarbejdere, setMedarbejdere] = useState([]);
-  const [userMetadata, setUserMetadata] = useState({});
-  const [workerTicketCounts, setWorkerTicketCounts] = useState({});
-  const [ticketNotes, setTicketNotes] = useState({})
+  const router = useRouter()
+  const { toast } = useToast()
+  const [tickets, setTickets] = useState([])
+  const [medarbejdere, setMedarbejdere] = useState([])
+  const [userMetadata, setUserMetadata] = useState({})
+  const [workerTicketCounts, setWorkerTicketCounts] = useState({})
 
-  // Fetch data and handle login/logout
   useEffect(() => {
-    const getUserFromCookie = () => {
-      const cookies = document.cookie.split("; ").reduce((acc, cookie) => {
-        const [key, value] = cookie.split("=");
-        acc[key] = decodeURIComponent(value);
-        return acc;
-      }, {});
-  
-      if (cookies.user) {
-        try {
-          const userData = JSON.parse(cookies.user);
-          
-          const metaData = {
-            id: userData.data.id || null,
-            Fornavn: userData.data.Fornavn || "",
-            Efternavn: userData.data.Efternavn || "",
-            Department: userData.data.Department || "",
-            Mail: userData.data.Mail || "",
-            Phone: userData.data.Phone || "",
-            IsSupporter: userData.data.IsSupporter || false,
-            IsAdmin: userData.data.IsAdmin || false,
-            IsDeveloper: userData.data.IsDeveloper || false,
-          };
+    getUserFromCookie()
+    fetchMedarbejdere()
+    fetchTickets()
+    fetchTicketNotes()
+    subscribeToTickets()
 
-          setUserMetadata(metaData);
-          
+    return () => {
+      supabase.removeAllChannels()
+    }
+  }, [router])
 
-        } catch (error) {
-          console.error("Failed to parse user cookie:", error);
-          router.push("/pages/login");
-        }
-      } else {
-        router.push("/pages/login");
-      }
-    };
-  
-    getUserFromCookie();
-    fetchMedarbejdere();
-    fetchTickets();
-    fetchTicketNotes();
-  }, [router]);
-  
   useEffect(() => {
     updateWorkerTicketCounts()
   }, [tickets, medarbejdere])
 
+  const getUserFromCookie = () => {
+    const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='))
+    if (userCookie) {
+      const userJson = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
+      console.log(userJson)
+      console.log(userJson.data)
+      setUserMetadata(userJson.data)
+    } else {
+      router.push("./login")
+    }
+  }
+
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
-      .from("Medarbejdere")
-      .select("*")
-    
+      .from('Medarbejdere')
+      .select('*')
+
     if (error) {
       toast({
-        title: "Error fetching members",
+        title: "Error fetching employees",
         description: error.message,
         variant: "destructive",
       })
@@ -88,10 +66,10 @@ export default function Dashboard() {
 
   const fetchTickets = async () => {
     const { data, error } = await supabase
-      .from("Tickets")
-      .select("*")
-      .order("created_at", { ascending: false })
-    
+      .from('Tickets')
+      .select('*')
+      .order('created_at', { ascending: false })
+
     if (error) {
       toast({
         title: "Error fetching tickets",
@@ -105,32 +83,33 @@ export default function Dashboard() {
 
   const fetchTicketNotes = async () => {
     const { data, error } = await supabase
-      .from("TicketNotes")
-      .select("*")
-      .order("created_at", { ascending: false })
-  
+      .from('TicketNotes')
+      .select('*')
+      .order('created_at', { ascending: false })
+
     if (error) {
       toast({
-        title: "Error fetching notes",
+        title: "Error fetching ticket notes",
         description: error.message,
         variant: "destructive",
       })
     } else {
-      const notesByTicket = data.reduce((acc, note) => {
-        if (!acc[note.TicketId]) {
-          acc[note.TicketId] = []
-        }
-        acc[note.TicketId].push(note)
-        return acc
-      }, {})
-      setTicketNotes(notesByTicket)
+      // You might want to update the state with the notes or pass them to the TicketList component
+      // For now, we'll just log them
+      console.log("Ticket notes:", data)
     }
   }
 
-  const handleLogout = () => {
-    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    router.push("./login");
-  };
+  const subscribeToTickets = () => {
+    const ticketsChannel = supabase
+      .channel('tickets')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Tickets' }, fetchTickets)
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(ticketsChannel)
+    }
+  }
 
   const updateWorkerTicketCounts = () => {
     const counts = {}
@@ -142,100 +121,9 @@ export default function Dashboard() {
     setWorkerTicketCounts(counts)
   }
 
-  const handleCreateUser = async () => {
-    const hashedPassword = await bcrypt.hash(newUser.HashedPassword, 10)
-    
-    console.log(hashedPassword)
-
-    const userToSave = {
-      ...newUser,
-      HashedPassword: hashedPassword,
-    }
-
-    const { data, error } = await supabase
-      .from("Medarbejdere")
-      .insert([userToSave])
-      .select()
-
-    if (error) {
-      toast({
-        title: "Error creating user",
-        description: error.message,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "User created",
-        description: "New user has been successfully created.",
-      })
-      setNewUser({
-        Fornavn: "",
-        Efternavn: "",
-        Department: "",
-        Mail: "",
-        Phone: "",
-        IsSupporter: false,
-        IsAdmin: false,
-        IsDeveloper: false,
-        HashedPassword: "",
-      })
-      setIsCreateUserOpen(false)
-      fetchMedarbejdere()
-    }
-  }
-
-  const handleAssignWorker = async (ticketId, workerId) => {
-    const { error } = await supabase
-      .from('Tickets')
-      .update({ MedarbejderId: workerId })
-      .eq('id', ticketId)
-  
-    if (error) {
-      toast({
-        title: "Error assigning worker",
-        description: error.message,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Worker assigned",
-        description: "The worker has been successfully assigned to the ticket.",
-      })
-      fetchTickets()
-    }
-  }
-
-  const handleStatusChange = async (ticketId, status) => {
-    const updates = {}
-    if (status === 'ongoing') {
-      updates.Ongoing = true
-      updates.Done = false
-    } else if (status === 'done') {
-      updates.Done = true
-      updates.Ongoing = false
-    } else {
-      updates.Done = false
-      updates.Ongoing = false
-    }
-
-    const { error } = await supabase
-      .from('Tickets')
-      .update(updates)
-      .eq('id', ticketId)
-
-    if (error) {
-      toast({
-        title: "Error updating ticket status",
-        description: error.message,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Status updated",
-        description: "Ticket status has been updated successfully.",
-      })
-      fetchTickets()
-    }
+  const handleLogout = () => {
+    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    router.push("./login")
   }
 
   return (
@@ -245,52 +133,45 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <List className="h-5 w-5" /> Members
+              <Button variant="ghost" className="flex items-center gap-2">
+                <List className="h-5 w-5" />
+                Members
               </Button>
             </SheetTrigger>
             <SheetContent>
               <SheetHeader>
                 <SheetTitle>Members List</SheetTitle>
+                <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
               </SheetHeader>
-              <MembersList medarbejdere={medarbejdere} userMetadata={userMetadata} workerTicketCounts={workerTicketCounts} handleCreateUser={handleCreateUser}/>
-              </SheetContent>
+              <MembersList 
+                medarbejdere={medarbejdere} 
+                workerTicketCounts={workerTicketCounts} 
+                userMetadata={userMetadata}
+                fetchMedarbejdere={fetchMedarbejdere}
+              />
+            </SheetContent>
           </Sheet>
-          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
-            <LogOut className="h-5 w-5" /> Logout
+          <Button variant="outline" onClick={handleLogout} className="flex items-center gap-2">
+            <LogOut className="h-5 w-5" />
+            Logout
           </Button>
         </div>
       </div>
-
+      
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Ticket Form Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlusCircle className="h-6 w-6" />
-              Create New Ticket
-            </CardTitle>
-            <CardDescription>Fill in the details to create a new ticket.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TicketForm userMetadata={userMetadata} onTicketCreated={fetchTickets} medarbejdere={medarbejdere}/>
-          </CardContent>
-        </Card>
-
-        {/* Ticket List Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"> 
-              <Ticket className="h-6 w-6" />
-              Recent Tickets
-            </CardTitle>
-            <CardDescription>View and manage your recent tickets.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TicketList tickets={tickets} medarbejdere={medarbejdere} ticketNotes={ticketNotes} userMetadata={userMetadata} fetchTicketNotes={fetchTicketNotes} handleAssignWorker={handleAssignWorker} handleStatusChange={handleStatusChange}/>
-          </CardContent>
-        </Card>
+        <CreateTicketForm 
+          userMetadata={userMetadata} 
+          medarbejdere={medarbejdere} 
+          fetchTickets={fetchTickets}
+        /> 
+        <TicketList 
+          tickets={tickets} 
+          medarbejdere={medarbejdere} 
+          fetchTickets={fetchTickets}
+          fetchTicketNotes={fetchTicketNotes}
+          userMetadata={userMetadata} // Add this line
+        />
       </div>
     </div>
-  );
+  )
 }
