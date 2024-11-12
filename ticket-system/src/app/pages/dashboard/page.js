@@ -67,8 +67,10 @@ export default function Dashboard() {
   const fetchTickets = async () => {
     const { data, error } = await supabase
       .from('Tickets')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .select("*")
+      .neq("Done", "True")
+      .order("Priority", { ascending: true }) 
+      .order("created_at", { ascending: false });
 
     if (error) {
       toast({
