@@ -9,6 +9,7 @@ import { useTheme } from 'next-themes'
 import "./globals.css"
 import { Toaster } from '@/components/ui/toaster'
 import ThemeSelector from '@/components/ThemeSelector'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,7 +31,9 @@ export default function RootLayout({ children }) {
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ThemeSelector />
+          <TooltipProvider>
           {children}
+          </TooltipProvider>
           <Toaster />
         </ThemeProvider>
         

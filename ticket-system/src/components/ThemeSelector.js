@@ -15,9 +15,9 @@ import {
   } from "@/components/ui/dropdown-menu"
   
 
-  const ThemeSelector = () => {
+  const ThemeSelector = () => {           
     const { theme, setTheme } = useTheme();
-    const [selectedColorTheme, setSelectedColorTheme] = useState('theme-zinc');
+    const [selectedColorTheme, setSelectedColorTheme] = useState('theme-blue');
   
     useEffect(() => {
       document.documentElement.classList.remove('theme-zinc', 'theme-red', 'theme-blue', 'theme-orange', 'theme-yellow', 'theme-green', 'theme-violet');
