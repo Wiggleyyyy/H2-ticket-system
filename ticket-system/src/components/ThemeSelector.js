@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Circle } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import {
     DropdownMenu,
@@ -20,7 +20,7 @@ import {
     const [selectedColorTheme, setSelectedColorTheme] = useState('theme-zinc');
   
     useEffect(() => {
-      document.documentElement.classList.remove('theme-zinc', 'theme-red');
+      document.documentElement.classList.remove('theme-zinc', 'theme-red', 'theme-blue', 'theme-orange', 'theme-yellow', 'theme-green', 'theme-violet');
       document.documentElement.classList.add(selectedColorTheme);
     }, [selectedColorTheme]);
   
@@ -42,16 +42,31 @@ import {
             <DropdownMenuItem
               onClick={() => handleColorThemeChange('theme-zinc')}
               className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-zinc' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-            >
-              Zinc
-            </DropdownMenuItem>
+            ><Circle className='text-zinc-500'/>Zinc</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleColorThemeChange('theme-red')}
               className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-red' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
-            >
-              Red
-            </DropdownMenuItem>
-            {/* Add more color themes as needed */}
+            ><Circle className='text-red-500'/>Red</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleColorThemeChange('theme-orange')}
+              className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-orange' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            ><Circle className='text-orange-500'/>Orange</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleColorThemeChange('theme-yellow')}
+              className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-yellow' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            ><Circle className='text-yellow-500'/>Yellow</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleColorThemeChange('theme-green')}
+              className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-green' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            ><Circle className='text-green-500'/>Green</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleColorThemeChange('theme-blue')}
+              className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-blue' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            ><Circle className='text-blue-500'/>Blue</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleColorThemeChange('theme-violet')}
+              className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-violet' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            ><Circle className='text-violet-500'/>Violet</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
   
