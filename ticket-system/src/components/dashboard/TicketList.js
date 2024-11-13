@@ -18,6 +18,7 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
   const [statusFilter, setStatusFilter] = useState('all')
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false)
   const [selectedWorker, setSelectedWorker] = useState(null)
+  const [sortOrder, setSortOrder] = useState(null) // Track the sorting order
 
   useEffect(() => {
     let result = tickets;
@@ -36,13 +37,19 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
       result = result.filter(ticket => ticket.MedarbejderId === selectedWorker);
     }
 
+    // Sort by "Newest"
+    if (sortOrder === 'newest') {
+      result = result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+
     setFilteredTickets(result);
-  }, [tickets, statusFilter, selectedWorker]);
+  }, [tickets, statusFilter, selectedWorker, sortOrder]);
 
   const clearFilters = () => {
     setStatusFilter('all')
     setSelectedWorker(null)
     setShowWorkerDropdown(false)
+    setSortOrder(null) // Reset sorting order
   }
 
   return (
@@ -92,7 +99,13 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Filter by</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem onCheckedChange={() => setShowWorkerDropdown(false)}>
+                  <DropdownMenuCheckboxItem
+                    checked={sortOrder === 'newest'}
+                    onCheckedChange={() => {
+                      setSortOrder(sortOrder === 'newest' ? null : 'newest')
+                      setShowWorkerDropdown(false)
+                    }}
+                  >
                     Newest
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem onCheckedChange={() => setShowWorkerDropdown(false)}>
