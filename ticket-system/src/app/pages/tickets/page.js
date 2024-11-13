@@ -67,7 +67,6 @@ export default function Dashboard() {
     const { data, error } = await supabase
       .from('Tickets')
       .select("*")
-      .neq("Done", "True")
       .order("Priority", { ascending: true }) 
       .order("created_at", { ascending: false });
 
