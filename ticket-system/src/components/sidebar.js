@@ -3,8 +3,20 @@ import Link from "next/link"
 import { File, Home, LineChart, ListFilter, MoreHorizontal, Package, Package2, PanelLeft, PlusCircle, Search, Settings, ShoppingCart, Users2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Button } from "./ui/button"
+import { useRouter } from "next/navigation"
 
-const Sidebar = () => {           
+
+const Sidebar = () => {      
+  const router = useRouter()
+  
+  const handleLogout = () => {
+    console.log("test")
+
+    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+    router.push("./login")
+  }
+  
     return (
         <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
             <nav className="flex flex-col items-center gap-4 px-2 sm:py-5">
@@ -55,13 +67,10 @@ const Sidebar = () => {
             <nav className="mt-auto flex flex-col items-center gap-4 px-2 sm:py-5">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link
-                href="#"
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
-              >
+              <Button variant="destructive" className="w-9 h-9" onClick={() => handleLogout()}>
                 <LogOutIcon className="h-5 w-5"/>
                 <span className="sr-only">Logout</span>
-              </Link>
+              </Button>
             </TooltipTrigger>
             <TooltipContent side="right">Logout</TooltipContent>
           </Tooltip>
