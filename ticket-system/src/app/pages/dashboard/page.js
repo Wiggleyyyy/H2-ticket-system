@@ -1,4 +1,3 @@
-// Dashboard.js
 'use client'
 
 import { useState, useEffect } from "react"
@@ -7,10 +6,9 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/app/utils/supabase/client"
 import CreateTicketForm from "@/components/dashboard/CreateTicketForm"
 import TicketList from "@/components/dashboard/TicketList"
-import MembersList from "@/components/dashboard/MembersList" //says error but there isnt one???
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { List, LogOut } from "lucide-react"
+import { List, LogOut } from 'lucide-react'
 import Sidebar from "@/components/sidebar"
 
 export default function Dashboard() {
@@ -97,8 +95,6 @@ export default function Dashboard() {
         variant: "destructive",
       })
     } else {
-      // You might want to update the state with the notes or pass them to the TicketList component
-      // For now, we'll just log them
       console.log("Ticket notes:", data)
     }
   }
@@ -126,35 +122,24 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto p-4">
-      <Sidebar/>
+      <Sidebar
+        medarbejdere={medarbejdere}
+        workerTicketCounts={workerTicketCounts}
+        userMetadata={userMetadata}
+        fetchMedarbejdere={fetchMedarbejdere}
+      />
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Worker Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <List className="h-5 w-5" />
-                Members
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Members List</SheetTitle>
-                <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
-              </SheetHeader>
-              <MembersList 
-                medarbejdere={medarbejdere} 
-                workerTicketCounts={workerTicketCounts} 
-                userMetadata={userMetadata}
-                fetchMedarbejdere={fetchMedarbejdere}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
+        <h1 className="text-2xl font-bold">Tickets</h1>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        
+        <TicketList 
+          tickets={tickets} 
+          medarbejdere={medarbejdere} 
+          fetchTickets={fetchTickets}
+          fetchTicketNotes={fetchTicketNotes}
+          userMetadata={userMetadata}
+        />
       </div>
     </div>
   )
