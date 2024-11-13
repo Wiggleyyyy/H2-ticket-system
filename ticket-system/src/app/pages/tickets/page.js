@@ -136,13 +136,13 @@ export default function Dashboard() {
         <h1 className="text-2xl font-bold">Tickets</h1>
       </div>
       
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="gap-6">
         <TicketList 
           tickets={tickets} 
           medarbejdere={medarbejdere} 
           fetchTickets={fetchTickets}
           fetchTicketNotes={fetchTicketNotes}
-          userMetadata={userMetadata} // Add this line
+          userMetadata={userMetadata}
         />
       </div>
     </div>
