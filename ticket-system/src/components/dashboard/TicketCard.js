@@ -7,29 +7,9 @@ import { supabase } from "@/app/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  File,
-  Home,
-  LineChart,
-  ListFilter,
-  MoreHorizontal,
-  Package,
-  Package2,
-  PanelLeft,
-  PlusCircle,
-  Search,
-  Settings,
-  ShoppingCart,
-  Users2,
-} from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { CheckCircle2, Clock, File, Home, LineChart, ListFilter, MoreHorizontal, Package, Package2, PanelLeft, PlusCircle, Search, Settings, ShoppingCart, Users2, XCircle } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 
 // Import the priority mapping if using a separate utility file
 // import { priorityMap } from "./PriorityUtils"
@@ -234,19 +214,61 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
     <TableRow>
       <TableCell className="font-medium">{ticket.TicketNavn}</TableCell>
       <TableCell>
-        <Badge variant="outline">Open</Badge>
+        {ticket.Done && (
+          <Badge variant="secondary">
+            Completed
+          </Badge>
+        )}
+        {ticket.Ongoing && (
+          <Badge variant="secondary">
+            In Progress
+          </Badge>
+        )}
+        {!ticket.Done && !ticket.Ongoing && (
+          <Badge variant="secondary">
+            Open
+          </Badge>
+        )}
       </TableCell>
       <TableCell>
-        <Badge variant="secondary" className="bg-green-500 text-white">4 (Low)</Badge>
+        <Badge variant="secondary" className={`${
+                    priority.color === 'red' ? 'bg-red-500' :
+                    priority.color === 'orange' ? 'bg-orange-500' :
+                    priority.color === 'yellow' ? 'bg-yellow-500' :
+                    priority.color === 'green' ? 'bg-green-500' :
+                    'bg-gray-500'
+                  } text-white`}>{priority.label}</Badge>
+      </TableCell>
+      <TableCell className="">{ticket.Fejlkode}</TableCell>
+      <TableCell className="">
+      <Select
+            value={ticket.MedarbejderId || ""}
+            onValueChange={(value) => handleAssignWorker(value)}
+          >
+            <SelectTrigger id={`worker-${ticket.id}`}>
+              <SelectValue placeholder="Select a worker" />
+            </SelectTrigger>
+            <SelectContent>
+              {medarbejdere.map((worker) => (
+                <SelectItem key={worker.id} value={worker.id}>
+                  {worker.Fornavn} {worker.Efternavn}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
       </TableCell>
       <TableCell className="">
-        404
-      </TableCell>
-      <TableCell className="">
-        Noah House
-      </TableCell>
-      <TableCell className="">
-        2023-07-12 10:42 AM
+        {new Date(ticket.created_at).toLocaleDateString('en-GB', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }) + 
+        ' ' + 
+        new Date(ticket.created_at).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      }
       </TableCell>
       <TableCell>
         <DropdownMenu>
