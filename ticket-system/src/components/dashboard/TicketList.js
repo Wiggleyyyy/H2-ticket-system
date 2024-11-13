@@ -19,7 +19,9 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
   const [filteredTickets, setFilteredTickets] = useState(tickets)
   const [statusFilter, setStatusFilter] = useState('all')
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false)
+  const [showPriorityDropdown, setShowPriorityDropdown] = useState(false)
   const [selectedWorker, setSelectedWorker] = useState(null)
+  const [selectedPriority, setSelectedPriority] = useState(null)
   const [selectedDate, setSelectedDate] = useState(null)
   const [sortOrder, setSortOrder] = useState(null)
 
@@ -40,6 +42,11 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
       result = result.filter(ticket => ticket.MedarbejderId === selectedWorker);
     }
 
+    // Priority filter
+    if (selectedPriority) {
+      result = result.filter(ticket => ticket.Priority === parseInt(selectedPriority));
+    }
+
     // Date filter
     if (selectedDate) {
       result = result.filter(ticket => {
@@ -54,13 +61,15 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
     }
 
     setFilteredTickets(result);
-  }, [tickets, statusFilter, selectedWorker, selectedDate, sortOrder]);
+  }, [tickets, statusFilter, selectedWorker, selectedPriority, selectedDate, sortOrder]);
 
   const clearFilters = () => {
     setStatusFilter('all')
     setSelectedWorker(null)
+    setSelectedPriority(null)
     setSelectedDate(null)
     setShowWorkerDropdown(false)
+    setShowPriorityDropdown(false)
     setSortOrder(null)
   }
 
@@ -99,10 +108,26 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
                   </SelectContent>
                 </Select>
               )}
+              {showPriorityDropdown && (
+                <Select
+                  value={selectedPriority || ""}
+                  onValueChange={(value) => setSelectedPriority(value)}
+                >
+                  <SelectTrigger className="space-y-2">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="4">4 (Lowest)</SelectItem>
+                    <SelectItem value="3">3</SelectItem>
+                    <SelectItem value="2">2</SelectItem>
+                    <SelectItem value="1">1 (Highest)</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 gap-1">
-                    <Calendar1/>
+                    <Calendar1 />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -133,6 +158,7 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
                     onCheckedChange={() => {
                       setSortOrder(sortOrder === 'newest' ? null : 'newest')
                       setShowWorkerDropdown(false)
+                      setShowPriorityDropdown(false)
                     }}
                   >
                     Newest
@@ -140,11 +166,17 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
                   <DropdownMenuCheckboxItem
                     onCheckedChange={() => {
                       setShowWorkerDropdown(true)
+                      setShowPriorityDropdown(false)
                     }}
                   >
                     Assigned
                   </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem onCheckedChange={() => setShowWorkerDropdown(false)}>
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setShowPriorityDropdown(true)
+                      setShowWorkerDropdown(false)
+                    }}
+                  >
                     Priority
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuSeparator />
