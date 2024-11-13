@@ -1,7 +1,6 @@
-// CreateTicketForm.js
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/app/utils/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -14,19 +13,35 @@ import { PlusCircle } from "lucide-react"
 
 export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTickets }) {
   const { toast } = useToast()
-  const [newTicket, setNewTicket] = useState({
+
+  // Initialize state with `userMetadata` values for "self"
+  const initialTicketState = {
     ticketTitle: "",
-    name: "",
-    email: "",
-    phone: "",
+    name: `${userMetadata?.Fornavn || ""} ${userMetadata?.Efternavn || ""}`,
+    email: userMetadata?.Mail || "",
+    phone: userMetadata?.Phone || "",
     description: "",
     errorCode: "",
     deviceOrBrowser: "",
     createdFor: "self",
     MedarbejderId: "",
     Priority: 4,
-  })
+  }
+
+  const [newTicket, setNewTicket] = useState(initialTicketState)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    // Update form fields if `userMetadata` changes
+    if (newTicket.createdFor === "self") {
+      setNewTicket({
+        ...newTicket,
+        name: `${userMetadata?.Fornavn || ""} ${userMetadata?.Efternavn || ""}`,
+        email: userMetadata?.Mail || "",
+        phone: userMetadata?.Phone || "",
+      })
+    }
+  }, [userMetadata])
 
   const handleCreateTicket = async (e) => {
     e.preventDefault()
@@ -35,7 +50,7 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
       return
     }
     setError("")
-  
+
     const ticketData = {
       TicketNavn: newTicket.ticketTitle,
       Navn: newTicket.name,
@@ -49,12 +64,12 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
       MedarbejderId: newTicket.MedarbejderId,
       Priority: newTicket.Priority,
     }
-  
+
     const { data, error } = await supabase
       .from("Tickets")
       .insert([ticketData])
       .select()
-  
+
     if (error) {
       toast({
         title: "Error creating ticket",
@@ -66,22 +81,10 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
         title: "Ticket created",
         description: "Your ticket has been successfully created.",
       })
-      setNewTicket({
-        ticketTitle: "",
-        name: "",
-        email: "",
-        phone: "",
-        description: "",
-        errorCode: "",
-        deviceOrBrowser: "",
-        createdFor: "self",
-        MedarbejderId: "",
-        Priority: 4,
-      })
+      setNewTicket(initialTicketState)
       fetchTickets()
     }
   }
-  
 
   return (
     <Card>
@@ -100,14 +103,16 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
               value={newTicket.createdFor}
               onValueChange={(value) => {
                 if (value === "self") {
+                  // Set fields with userMetadata when "self" is selected
                   setNewTicket(prevState => ({
                     ...prevState,
                     createdFor: value,
-                    name: `${userMetadata.Fornavn} ${userMetadata.Efternavn}`,
-                    email: userMetadata.Mail,
-                    phone: userMetadata.Phone,
+                    name: `${userMetadata?.Fornavn || ""} ${userMetadata?.Efternavn || ""}`,
+                    email: userMetadata?.Mail || "",
+                    phone: userMetadata?.Phone || "",
                   }))
                 } else {
+                  // Clear fields when "customer" is selected
                   setNewTicket(prevState => ({
                     ...prevState,
                     createdFor: value,
@@ -143,29 +148,26 @@ export default function CreateTicketForm({ userMetadata, medarbejdere, fetchTick
               placeholder="Name"
               value={newTicket.name}
               onChange={(e) => setNewTicket({ ...newTicket, name: e.target.value })}
-              readOnly={newTicket.createdFor === "self"}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email {newTicket.createdFor === "customer" && "(Optional if phone is provided)"}</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="Email address"
               value={newTicket.email}
               onChange={(e) => setNewTicket({ ...newTicket, email: e.target.value })}
-              readOnly={newTicket.createdFor === "self"}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone {newTicket.createdFor === "customer" && "(Optional if email is provided)"}</Label>
+            <Label htmlFor="phone">Phone</Label>
             <Input
               id="phone"
               type="tel"
-              placeholder="Example: +45 01 23 45 67"
+              placeholder="Phone number"
               value={newTicket.phone}
               onChange={(e) => setNewTicket({ ...newTicket, phone: e.target.value })}
-              readOnly={newTicket.createdFor === "self"}
             />
           </div>
           <div className="space-y-2">

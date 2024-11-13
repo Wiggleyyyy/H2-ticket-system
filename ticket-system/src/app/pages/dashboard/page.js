@@ -8,7 +8,7 @@ import CreateTicketForm from "@/components/dashboard/CreateTicketForm"
 import TicketList from "@/components/dashboard/TicketList"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { List, LogOut } from 'lucide-react'
+import { List, LogOut, WatchIcon } from 'lucide-react'
 import Sidebar from "@/components/sidebar"
 
 export default function Dashboard() {
@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [medarbejdere, setMedarbejdere] = useState([])
   const [userMetadata, setUserMetadata] = useState({})
   const [workerTicketCounts, setWorkerTicketCounts] = useState({})
+  const [isUserMetadataLoaded, setIsUserMetadataLoaded] = useState(false)
 
   useEffect(() => {
     getUserFromCookie()
@@ -39,9 +40,9 @@ export default function Dashboard() {
     const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='))
     if (userCookie) {
       const userJson = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
-      console.log(userJson)
-      console.log(userJson.data)
-      setUserMetadata(userJson.data)
+      console.log("User data from cookie:", userJson) // Log here to check structure
+      setUserMetadata(userJson.data || {}) // Set userMetadata with data or fallback to an empty object
+      setIsUserMetadataLoaded(true) // Set the flag to true once userMetadata is set
     } else {
       router.push("./login")
     }
