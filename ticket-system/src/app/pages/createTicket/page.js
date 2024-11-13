@@ -1,4 +1,3 @@
-// Dashboard.js
 'use client'
 
 import { useState, useEffect } from "react"
@@ -7,7 +6,7 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/app/utils/supabase/client"
 import CreateTicketForm from "@/components/dashboard/CreateTicketForm"
 import TicketList from "@/components/dashboard/TicketList"
-import MembersList from "@/components/dashboard/MembersList" //says error but there isnt one???
+import MembersList from "@/components/dashboard/MembersList"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { List, LogOut } from "lucide-react"
@@ -41,8 +40,6 @@ export default function Dashboard() {
     const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='))
     if (userCookie) {
       const userJson = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
-      console.log(userJson)
-      console.log(userJson.data)
       setUserMetadata(userJson.data)
     } else {
       router.push("./login")
@@ -70,7 +67,7 @@ export default function Dashboard() {
       .from('Tickets')
       .select("*")
       .neq("Done", "True")
-      .order("Priority", { ascending: true }) 
+      .order("Priority", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -97,8 +94,6 @@ export default function Dashboard() {
         variant: "destructive",
       })
     } else {
-      // You might want to update the state with the notes or pass them to the TicketList component
-      // For now, we'll just log them
       console.log("Ticket notes:", data)
     }
   }
@@ -130,40 +125,46 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Sidebar/>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Worker Dashboard</h1>
-        <div className="flex items-center gap-4">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <List className="h-5 w-5" />
-                Members
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Members List</SheetTitle>
-                <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
-              </SheetHeader>
-              <MembersList 
-                medarbejdere={medarbejdere} 
-                workerTicketCounts={workerTicketCounts} 
-                userMetadata={userMetadata}
-                fetchMedarbejdere={fetchMedarbejdere}
-              />
-            </SheetContent>
-          </Sheet>
-          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
-            <LogOut className="h-5 w-5" />
-            Logout
-          </Button>
+    <div className="container mx-auto p-6 flex">
+      <Sidebar />
+      <div className="flex-1 ml-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Create a ticket</h1>
+          <div className="flex items-center gap-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <List className="h-5 w-5" />
+                  Members
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Members List</SheetTitle>
+                  <SheetDescription>List of all employees in Medarbejdere</SheetDescription>
+                </SheetHeader>
+                <MembersList 
+                  medarbejdere={medarbejdere} 
+                  workerTicketCounts={workerTicketCounts} 
+                  userMetadata={userMetadata}
+                  fetchMedarbejdere={fetchMedarbejdere}
+                />
+              </SheetContent>
+            </Sheet>
+            <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
+              <LogOut className="h-5 w-5" />
+              Logout
+            </Button>
+          </div>
         </div>
-      </div>
-      
-      <div className="grid md:grid-cols-2 gap-6">
         
+        <div className="w-full max-w-3xl mx-auto">
+          <CreateTicketForm 
+            userMetadata={userMetadata} 
+            medarbejdere={medarbejdere} 
+            fetchTickets={fetchTickets}
+          /> 
+        </div>
       </div>
     </div>
   )
