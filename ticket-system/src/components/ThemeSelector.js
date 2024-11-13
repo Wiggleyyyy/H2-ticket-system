@@ -20,7 +20,7 @@ import {
     const [selectedColorTheme, setSelectedColorTheme] = useState('theme-blue');
   
     useEffect(() => {
-      document.documentElement.classList.remove('theme-zinc', 'theme-red', 'theme-blue', 'theme-orange', 'theme-yellow', 'theme-green', 'theme-violet');
+      document.documentElement.classList.remove('theme-zinc', 'theme-red', 'theme-rose', 'theme-blue', 'theme-orange', 'theme-yellow', 'theme-green', 'theme-violet');
       document.documentElement.classList.add(selectedColorTheme);
     }, [selectedColorTheme]);
   
@@ -47,6 +47,10 @@ import {
               onClick={() => handleColorThemeChange('theme-red')}
               className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-red' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
             ><Circle className='text-red-500'/>Red</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleColorThemeChange('theme-rose')}
+              className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-rose' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
+            ><Circle className='text-rose-500'/>Rose</DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => handleColorThemeChange('theme-orange')}
               className={`p-2 cursor-pointer ${selectedColorTheme === 'theme-orange' ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
