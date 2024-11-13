@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react'
 import TicketCard from "./TicketCard"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { File, ListFilter, PlusCircle } from 'lucide-react'
+import { File, ListFilter, PlusCircle, Calendar1 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover" // Import Popover components
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Calendar } from "@/components/ui/calendar" // Import your calendar component
 
 export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchTicketNotes, userMetadata }) {
   const router = useRouter()
@@ -18,7 +20,8 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
   const [statusFilter, setStatusFilter] = useState('all')
   const [showWorkerDropdown, setShowWorkerDropdown] = useState(false)
   const [selectedWorker, setSelectedWorker] = useState(null)
-  const [sortOrder, setSortOrder] = useState(null) // Track the sorting order
+  const [selectedDate, setSelectedDate] = useState(null)
+  const [sortOrder, setSortOrder] = useState(null)
 
   useEffect(() => {
     let result = tickets;
@@ -37,19 +40,28 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
       result = result.filter(ticket => ticket.MedarbejderId === selectedWorker);
     }
 
+    // Date filter
+    if (selectedDate) {
+      result = result.filter(ticket => {
+        const ticketDate = new Date(ticket.created_at).toDateString();
+        return ticketDate === selectedDate.toDateString();
+      });
+    }
+
     // Sort by "Newest"
     if (sortOrder === 'newest') {
       result = result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     }
 
     setFilteredTickets(result);
-  }, [tickets, statusFilter, selectedWorker, sortOrder]);
+  }, [tickets, statusFilter, selectedWorker, selectedDate, sortOrder]);
 
   const clearFilters = () => {
     setStatusFilter('all')
     setSelectedWorker(null)
+    setSelectedDate(null)
     setShowWorkerDropdown(false)
-    setSortOrder(null) // Reset sorting order
+    setSortOrder(null)
   }
 
   return (
@@ -87,6 +99,23 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
                   </SelectContent>
                 </Select>
               )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-1">
+                    <Calendar1/>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      setSelectedDate(date);
+                    }}
+                    className="shadow-lg border rounded-md"
+                  />
+                </PopoverContent>
+              </Popover>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-8 gap-1">
@@ -108,10 +137,11 @@ export default function TicketList({ tickets, medarbejdere, fetchTickets, fetchT
                   >
                     Newest
                   </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem onCheckedChange={() => setShowWorkerDropdown(false)}>
-                    Date
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem onCheckedChange={() => setShowWorkerDropdown(true)}>
+                  <DropdownMenuCheckboxItem
+                    onCheckedChange={() => {
+                      setShowWorkerDropdown(true)
+                    }}
+                  >
                     Assigned
                   </DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem onCheckedChange={() => setShowWorkerDropdown(false)}>
