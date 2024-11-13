@@ -41,8 +41,6 @@ export default function Dashboard() {
     const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='))
     if (userCookie) {
       const userJson = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
-      console.log(userJson)
-      console.log(userJson.data)
       setUserMetadata(userJson.data)
     } else {
       router.push("./login")
