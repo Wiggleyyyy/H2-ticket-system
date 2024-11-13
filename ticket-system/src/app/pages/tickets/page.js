@@ -133,7 +133,7 @@ export default function Dashboard() {
     <div className="container mx-auto p-4">
       <Sidebar/>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Worker Dashboard</h1>
+        <h1 className="text-2xl font-bold">Tickets</h1>
         <div className="flex items-center gap-4">
           <Sheet>
             <SheetTrigger asChild>
@@ -163,11 +163,6 @@ export default function Dashboard() {
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        <CreateTicketForm 
-          userMetadata={userMetadata} 
-          medarbejdere={medarbejdere} 
-          fetchTickets={fetchTickets}
-        /> 
         <TicketList 
           tickets={tickets} 
           medarbejdere={medarbejdere} 
