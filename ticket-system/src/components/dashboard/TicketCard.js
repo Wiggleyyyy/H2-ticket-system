@@ -241,21 +241,21 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
       </TableCell>
       <TableCell className="">{ticket.Fejlkode}</TableCell>
       <TableCell className="">
-      <Select
-            value={ticket.MedarbejderId || ""}
-            onValueChange={(value) => handleAssignWorker(value)}
-          >
-            <SelectTrigger id={`worker-${ticket.id}`}>
-              <SelectValue placeholder="Select a worker" />
-            </SelectTrigger>
-            <SelectContent>
-              {medarbejdere.map((worker) => (
-                <SelectItem key={worker.id} value={worker.id}>
-                  {worker.Fornavn} {worker.Efternavn}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Select
+          value={ticket.MedarbejderId || ""}
+          onValueChange={(value) => handleAssignWorker(value)}
+        >
+          <SelectTrigger id={`worker-${ticket.id}`}>
+            <SelectValue placeholder="Select a worker" />
+          </SelectTrigger>
+          <SelectContent>
+            {medarbejdere.map((worker) => (
+              <SelectItem key={worker.id} value={worker.id}>
+                {worker.Fornavn} {worker.Efternavn}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </TableCell>
       <TableCell className="">
         {new Date(ticket.created_at).toLocaleDateString('en-GB', {
