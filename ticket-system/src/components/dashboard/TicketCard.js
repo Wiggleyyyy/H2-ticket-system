@@ -6,9 +6,9 @@ import { useToast } from "@/hooks/use-toast"
 import { supabase } from "@/app/utils/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CheckCircle2, Clock, File, Home, LineChart, ListFilter, MoreHorizontal, Package, Package2, PanelLeft, PlusCircle, Search, Settings, ShoppingCart, Users2, XCircle } from "lucide-react"
+import { CheckCircle2, Clock, Delete, Eye, File, Home, LineChart, ListFilter, MoreHorizontal, Package, Package2, PanelLeft, Pen, PlusCircle, Search, Settings, ShoppingCart, Trash, Trash2, Users2, View, XCircle } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 
 // Import the priority mapping if using a separate utility file
@@ -284,8 +284,9 @@ export default function TicketCard({ ticket, medarbejdere, fetchTickets, userMet
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem>View</DropdownMenuItem>
-            <DropdownMenuItem>Delete</DropdownMenuItem>
+            <DropdownMenuSeparator/>
+            <DropdownMenuItem><Eye/>View</DropdownMenuItem>
+            <DropdownMenuItem><Trash/>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>

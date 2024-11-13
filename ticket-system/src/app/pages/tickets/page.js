@@ -125,18 +125,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="ml-16 mx-auto p-4">
       <Sidebar
         medarbejdere={medarbejdere}
         workerTicketCounts={workerTicketCounts}
         userMetadata={userMetadata}
         fetchMedarbejdere={fetchMedarbejdere}
       />
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Tickets</h1>
-      </div>
-      
-      <div className="gap-6">
+      <div className="gap-6 mt-16">
         <TicketList 
           tickets={tickets} 
           medarbejdere={medarbejdere} 
