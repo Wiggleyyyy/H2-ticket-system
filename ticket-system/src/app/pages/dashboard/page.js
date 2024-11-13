@@ -124,11 +124,6 @@ export default function Dashboard() {
     setWorkerTicketCounts(counts)
   }
 
-  const handleLogout = () => {
-    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    router.push("./login")
-  }
-
   return (
     <div className="container mx-auto p-4">
       <Sidebar/>
@@ -155,10 +150,6 @@ export default function Dashboard() {
               />
             </SheetContent>
           </Sheet>
-          <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
-            <LogOut className="h-5 w-5" />
-            Logout
-          </Button>
         </div>
       </div>
       
