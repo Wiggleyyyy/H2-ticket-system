@@ -166,7 +166,7 @@ export default function Dashboard() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">{medarbejdere.length}</div>
               <p className="text-xs text-muted-foreground">
                 +3 from the last month
               </p>
@@ -271,7 +271,7 @@ export default function Dashboard() {
                       {worker.Mail}
                     </p>
                   </div>
-                  <div className="ml-auto font-medium">10 Ongoing Tickets</div>
+                  <div className="ml-auto font-medium">{}</div>
                 </div>
                 ))}
             </CardContent>
