@@ -1,20 +1,20 @@
-'use client'
+'use client';
 
-import { HomeIcon, LogOutIcon, Ticket, PlusCircle, Users } from 'lucide-react'
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { Button } from "@/components/ui/button"
-import MembersList from "@/components/dashboard/MembersList"
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { HomeIcon, LogOutIcon, Ticket, PlusCircle, Users } from 'lucide-react';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import MembersList from "@/components/dashboard/MembersList";
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 export default function Sidebar({ medarbejdere, workerTicketCounts, userMetadata, fetchMedarbejdere }) {
-  const router = useRouter()
+  const router = useRouter();
   
   const handleLogout = () => {
-    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-    router.push("./login")
-  }
+    document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    router.push("/pages/login");
+  };
   
   return (
     <aside className="fixed inset-y-0 left-0 z-10 hidden w-14 flex-col border-r bg-background sm:flex">
@@ -23,7 +23,7 @@ export default function Sidebar({ medarbejdere, workerTicketCounts, userMetadata
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="./dashboard"
+                href="/pages/dashboard"
                 className="group flex h-9 w-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:h-8 md:w-8 md:text-base"
               >
                 <HomeIcon className="h-4 w-4 transition-all group-hover:scale-110" />
@@ -36,7 +36,7 @@ export default function Sidebar({ medarbejdere, workerTicketCounts, userMetadata
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="./tickets"
+                href="/pages/tickets"
                 className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-accent-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <Ticket className="h-5 w-5" />
@@ -49,7 +49,7 @@ export default function Sidebar({ medarbejdere, workerTicketCounts, userMetadata
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                href="./createTicket"
+                href="/pages/createTicket"
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8"
               >
                 <PlusCircle className="h-5 w-5" />
@@ -99,5 +99,5 @@ export default function Sidebar({ medarbejdere, workerTicketCounts, userMetadata
         </nav>
       </TooltipProvider>
     </aside>
-  )
+  );
 }
