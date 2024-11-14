@@ -24,11 +24,9 @@ export default function Ticket({ params }) {
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
 
-  // Extract the ticket ID from params
   const ticketId = params?.id;
 
   useEffect(() => {
-    // Ensure ticketId is available before making any requests
     if (ticketId) {
       getUserFromCookie();
       fetchTicket();
@@ -152,6 +150,13 @@ export default function Ticket({ params }) {
   };
 
   const handleUpdateTicket = async (updates) => {
+    // Set timestamps based on status changes
+    if (updates.Done) {
+      updates.Done_Timestamp = new Date().toISOString();
+    } else if (updates.Ongoing) {
+      updates.Progress_Timestamp = new Date().toISOString();
+    }
+
     const { error } = await supabase
       .from('Tickets')
       .update(updates)
@@ -211,7 +216,7 @@ export default function Ticket({ params }) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-6">
-                  <div className="grid gap-3">
+                    <div className="grid gap-3">
                       <Label htmlFor="description">Description</Label>
                       <Input
                         id="description"
@@ -243,126 +248,102 @@ export default function Ticket({ params }) {
                     </div>
                     <div className="grid gap-3">
                       <Label htmlFor="assignedTo">Assigned To</Label>
-                      <Select value={ticket.MedarbejderId || ''} onValueChange={(value) => setTicket({...ticket, MedarbejderId: value})}>
+                      <Select value={ticket.MedarbejderId || ''} onValueChange={(value) => setTicket({...ticket, MedarbejderId: parseInt(value)})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a worker" />
+                          <SelectValue placeholder="Select an employee" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {medarbejdere.map((worker) => (
-                              <SelectItem key={worker.id} value={worker.id}>
-                                {worker.Fornavn} {worker.Efternavn}
+                            {medarbejdere.map((medarbejder) => (
+                              <SelectItem key={medarbejder.id} value={medarbejder.id}>
+                                {medarbejder.Fornavn} {medarbejder.Efternavn}
                               </SelectItem>
                             ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="grid gap-3">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={ticket.Done ? 'Done' : ticket.Ongoing ? 'Ongoing' : 'Not Started'} onValueChange={(value) => {
+                        if (value === 'Done') {
+                          handleUpdateTicket({ Done: true, Ongoing: false });
+                        } else if (value === 'Ongoing') {
+                          handleUpdateTicket({ Done: false, Ongoing: true });
+                        } else {
+                          handleUpdateTicket({ Done: false, Ongoing: false });
+                        }
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="Not Started">Not Started</SelectItem>
+                            <SelectItem value="Ongoing">Ongoing</SelectItem>
+                            <SelectItem value="Done">Done</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-3">
+                      <Label>Progress Timestamp</Label>
+                      <Input
+                        type="text"
+                        className="w-full"
+                        value={ticket.Progress_Timestamp ? new Date(ticket.Progress_Timestamp).toLocaleString() : 'Not Started'}
+                        readOnly
+                      />
+                    </div>
+                    <div className="grid gap-3">
+                      <Label>Done Timestamp</Label>
+                      <Input
+                        type="text"
+                        className="w-full"
+                        value={ticket.Done_Timestamp ? new Date(ticket.Done_Timestamp).toLocaleString() : 'Not Done'}
+                        readOnly
+                      />
+                    </div>
                   </div>
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Notes</CardTitle>
-                  <CardDescription>
-                    Notes regarding this ticket
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {notes.map((note) => (
-                    <div key={note.id} className="bg-muted p-3 rounded-lg space-y-1 mb-3">
-                      <div className="flex justify-between items-start">
-                        <p className="text-sm">{note.Note}</p>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleDeleteNote(note.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete note</span>
-                        </Button>
-                      </div>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span>Created at <span className='font-bold'>{new Date(note.created_at).toLocaleString()}</span></span>
-                        <p>{medarbejdere.find(m => m.id === note.MedarbejderId)?.Fornavn || 'Unknown'} {medarbejdere.find(m => m.id === note.MedarbejderId)?.Efternavn || ''}</p>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-                <CardFooter className="justify-center border-t p-4">
-                  <Textarea
-                    placeholder="Add a note..."
-                    className="min-h-[80px]"
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                  />
-                  <Button size="sm" className="gap-1 ml-3 shrink-0 min-h-[80px]" onClick={handleAddNote}>
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    Add Note
+                <CardFooter>
+                  <Button size="sm" onClick={() => handleUpdateTicket(ticket)}>
+                    Save Ticket
                   </Button>
                 </CardFooter>
               </Card>
             </div>
-            <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+            <div className="flex flex-col gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Ticket Status</CardTitle>
+                  <CardTitle>Notes</CardTitle>
+                  <CardDescription>Add a note to this ticket</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6">
-                    <div className="grid gap-3">
-                      <Label htmlFor="status">Status</Label>
-                      <Select
-                        value={ticket.Done ? 'completed' : (ticket.Ongoing ? 'progress' : 'open')}
-                        onValueChange={(value) => {
-                          const updates = {
-                            Done: value === 'completed',
-                            Ongoing: value === 'progress'
-                          }
-                          handleUpdateTicket(updates)
-                        }}
-                      >
-                        <SelectTrigger id="status">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="open">Open</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="progress">In Progress</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-3">
-                      <Label htmlFor="priority">Priority</Label>
-                      <Select
-                        value={ticket.Priority.toString()}
-                        onValueChange={(value) => handleUpdateTicket({ Priority: parseInt(value) })}
-                      >
-                        <SelectTrigger id="priority">
-                          <SelectValue placeholder="Select priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="4">4 (Low)</SelectItem>
-                          <SelectItem value="3">3</SelectItem>
-                          <SelectItem value="2">2</SelectItem>
-                          <SelectItem value="1">1 (High)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                <CardContent className="space-y-2">
+                  <Textarea placeholder="Add your note here..." value={newNote} onChange={(e) => setNewNote(e.target.value)} />
                 </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button size="sm" onClick={handleAddNote}>
+                    Add Note
+                  </Button>
+                </CardFooter>
               </Card>
+              <div className="space-y-2">
+                {notes.map(note => (
+                  <Card key={note.id}>
+                    <CardContent>
+                      <p>{note.Note}</p>
+                      <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => handleDeleteNote(note.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-center gap-2 md:hidden">
-            <Button variant="outline" size="sm" onClick={() => handleUpdateTicket({ Deleted: true })}>
-              Delete Ticket
-            </Button>
-            <Button size="sm" onClick={() => handleUpdateTicket(ticket)}>Save</Button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
