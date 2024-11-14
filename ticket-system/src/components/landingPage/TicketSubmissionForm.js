@@ -174,9 +174,7 @@ export default function TicketSubmissionForm({ onSubmit }) {
                       • Level 1: Supervisor<br />
                       • Level 2: Supportchef<br />
                       • Level 3: IT-direktør for kritiske incidents.</p>
-                      <p><strong>7. Rapportering og Gennemgang</strong><br />
-                      [Firmaets Navn] vil levere månedlige rapporter over alle tickets og opfyldelse af SLA-mål, så Kunden kan gennemgå supportpræstationen.</p>
-                      <p><strong>8. Aftalens Gyldighed og Ændringer</strong><br />
+                      <p><strong>7. Aftalens Gyldighed og Ændringer</strong><br />
                       Denne SLA gælder fra [Startdato] og fortsætter i [Aftaleperiode] eller indtil en ændring aftales.</p>
                     </DialogDescription>
                   </DialogHeader>
