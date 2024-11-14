@@ -1,174 +1,178 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
-import { supabase } from "@/app/utils/supabase/client"
-import { Button } from "@/components/ui/button"
-import Sidebar from "@/components/sidebar"
-import { ChevronLeft, PlusCircle, Trash2 } from 'lucide-react'
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/app/utils/supabase/client";
+import { Button } from "@/components/ui/button";
+import Sidebar from "@/components/sidebar";
+import { ChevronLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Ticket({ params }) {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [ticket, setTicket] = useState(null)
-  const [medarbejdere, setMedarbejdere] = useState([])
-  const [userMetadata, setUserMetadata] = useState({})
-  const [workerTicketCounts, setWorkerTicketCounts] = useState({})
-  const [notes, setNotes] = useState([])
-  const [newNote, setNewNote] = useState("")
+  const router = useRouter();
+  const { toast } = useToast();
+  const [ticket, setTicket] = useState(null);
+  const [medarbejdere, setMedarbejdere] = useState([]);
+  const [userMetadata, setUserMetadata] = useState({});
+  const [workerTicketCounts, setWorkerTicketCounts] = useState({});
+  const [notes, setNotes] = useState([]);
+  const [newNote, setNewNote] = useState("");
+
+  // Extract the ticket ID from params
+  const ticketId = params?.id;
 
   useEffect(() => {
-    getUserFromCookie()
-    fetchTicket()
-    fetchMedarbejdere()
-    fetchTicketNotes()
-  }, [params.id])
+    // Ensure ticketId is available before making any requests
+    if (ticketId) {
+      getUserFromCookie();
+      fetchTicket();
+      fetchMedarbejdere();
+      fetchTicketNotes();
+    }
+  }, [ticketId]);
 
   const getUserFromCookie = () => {
-    const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='))
+    const userCookie = document.cookie.split('; ').find(row => row.startsWith('user='));
     if (userCookie) {
-      const userJson = JSON.parse(decodeURIComponent(userCookie.split('=')[1]))
-      setUserMetadata(userJson.data)
+      const userJson = JSON.parse(decodeURIComponent(userCookie.split('=')[1]));
+      setUserMetadata(userJson.data);
     } else {
-      router.push("/login")
+      router.push("/login");
     }
-  }
+  };
 
   const fetchTicket = async () => {
     const { data, error } = await supabase
       .from('Tickets')
       .select("*")
-      .eq('id', params.id)
-      .single()
+      .eq('id', ticketId)
+      .single();
 
     if (error) {
       toast({
         title: "Error fetching ticket",
         description: error.message,
         variant: "destructive",
-      })
-      router.push("/tickets")
+      });
+      router.push("/tickets");
     } else if (!data) {
       toast({
         title: "Ticket not found",
         description: "The requested ticket does not exist.",
         variant: "destructive",
-      })
-      router.push("/tickets")
+      });
+      router.push("/tickets");
     } else {
-      setTicket(data)
+      setTicket(data);
     }
-  }
+  };
 
   const fetchMedarbejdere = async () => {
     const { data, error } = await supabase
       .from('Medarbejdere')
-      .select('*')
+      .select('*');
 
     if (error) {
       toast({
         title: "Error fetching employees",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
-      setMedarbejdere(data)
+      setMedarbejdere(data);
     }
-  }
+  };
 
   const fetchTicketNotes = async () => {
     const { data, error } = await supabase
       .from('TicketNotes')
       .select('*')
-      .eq('TicketId', params.id)
-      .order('created_at', { ascending: false })
+      .eq('TicketId', ticketId)
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast({
         title: "Error fetching ticket notes",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
-      setNotes(data)
+      setNotes(data);
     }
-  }
+  };
 
   const handleAddNote = async () => {
-    if (!newNote.trim()) return
+    if (!newNote.trim()) return;
 
     const { data, error } = await supabase
       .from('TicketNotes')
-      .insert([
-        { TicketId: params.id, Note: newNote.trim(), MedarbejderId: userMetadata.id }
-      ])
+      .insert([{ TicketId: ticketId, Note: newNote.trim(), MedarbejderId: userMetadata.id }]);
 
     if (error) {
       toast({
         title: "Error adding note",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
       toast({
         title: "Note added",
         description: "Your note has been added successfully.",
-      })
-      setNewNote("")
-      fetchTicketNotes()
+      });
+      setNewNote("");
+      fetchTicketNotes();
     }
-  }
+  };
 
   const handleDeleteNote = async (noteId) => {
     const { error } = await supabase
       .from('TicketNotes')
       .delete()
-      .eq('id', noteId)
+      .eq('id', noteId);
 
     if (error) {
       toast({
         title: "Error deleting note",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
       toast({
         title: "Note deleted",
         description: "The note has been successfully deleted.",
-      })
-      fetchTicketNotes()
+      });
+      fetchTicketNotes();
     }
-  }
+  };
 
   const handleUpdateTicket = async (updates) => {
     const { error } = await supabase
       .from('Tickets')
       .update(updates)
-      .eq('id', params.id)
+      .eq('id', ticketId);
 
     if (error) {
       toast({
         title: "Error updating ticket",
         description: error.message,
         variant: "destructive",
-      })
+      });
     } else {
       toast({
         title: "Ticket updated",
         description: "The ticket has been successfully updated.",
-      })
-      fetchTicket()
+      });
+      fetchTicket();
     }
-  }
+  };
 
-  if (!ticket) return null
+  if (!ticket) return null;
 
   return (
     <div className="ml-16 mx-auto p-4">
@@ -181,25 +185,18 @@ export default function Ticket({ params }) {
       <div className="gap-6 mt-16">
         <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => router.push('../tickets')}>
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => router.push('/tickets')}>
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Back</span>
             </Button>
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
               {ticket.TicketNavn}
             </h1>
-            <Badge variant="outline" className={`ml-auto sm:ml-0 ${
-              ticket.Priority === 1 ? 'bg-red-500' :
-              ticket.Priority === 2 ? 'bg-orange-500' :
-              ticket.Priority === 3 ? 'bg-yellow-500' :
-              'bg-green-500'
-            } text-white`}>
+            <Badge variant="outline" className={`ml-auto sm:ml-0 ${ticket.Priority === 1 ? 'bg-red-500' : ticket.Priority === 2 ? 'bg-orange-500' : ticket.Priority === 3 ? 'bg-yellow-500' : 'bg-green-500'} text-white`}>
               Priority: {ticket.Priority} {ticket.Priority === 1 ? '(High)' : ticket.Priority === 4 ? '(Low)' : ''}
             </Badge>
             <div className="hidden items-center gap-2 md:ml-auto md:flex">
-              <Button variant="outline" size="sm" onClick={() => handleUpdateTicket({ Deleted: true })}>
-                Delete
-              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleUpdateTicket({ Deleted: true })}>Delete</Button>
               <Button size="sm" onClick={() => handleUpdateTicket(ticket)}>Save Ticket</Button>
             </div>
           </div>
