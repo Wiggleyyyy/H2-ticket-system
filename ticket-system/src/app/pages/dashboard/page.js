@@ -76,8 +76,6 @@ export default function Dashboard() {
     const { data, error } = await supabase
       .from('Tickets')
       .select("*")
-      .neq("Done", "True")
-      .order("Priority", { ascending: true }) 
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -158,9 +156,9 @@ export default function Dashboard() {
               <Ticket className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">50</div>
+              <div className="text-2xl font-bold">{tickets.length}</div>
               <p className="text-xs text-muted-foreground">
-                +10 from the last month
+                +{tickets.length} from the last month
               </p>
             </CardContent>
           </Card>
@@ -184,9 +182,9 @@ export default function Dashboard() {
               <TicketPercent className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">31</div>
+              <div className="text-2xl font-bold">5</div>
               <p className="text-xs text-muted-foreground">
-                Out of 50 tickets
+                Out of {tickets.length} tickets
               </p>
             </CardContent>
           </Card>
@@ -237,7 +235,16 @@ export default function Dashboard() {
                       <TableCell>
                         <div className="font-medium">{ticket.TicketNavn}</div>
                       </TableCell>
-                      <TableCell className="">CRAZY</TableCell>
+                      <TableCell className="">
+                        <Badge variant="secondary" className={`${
+                          ticket.Priority === 1 ? 'bg-red-500' :
+                          ticket.Priority === 2 ? 'bg-orange-500' :
+                          ticket.Priority === 3 ? 'bg-yellow-500' :
+                          'bg-green-500'
+                        } text-white`}>
+                          {ticket.Priority} (Priority)
+                        </Badge>
+                      </TableCell>
                       <TableCell className="">{ticket.Fejlkode}</TableCell>
                       <TableCell className="">
                         {new Date(ticket.created_at).toLocaleDateString('en-GB', {
