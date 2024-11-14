@@ -128,6 +128,7 @@ export default function Dashboard() {
         workerTicketCounts={workerTicketCounts}
         userMetadata={userMetadata}
         fetchMedarbejdere={fetchMedarbejdere}
+        currentPage={"tickets"}
       />
       <div className="gap-6 mt-16">
         <TicketList 

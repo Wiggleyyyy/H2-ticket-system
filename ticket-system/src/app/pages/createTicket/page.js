@@ -133,6 +133,7 @@ export default function Dashboard() {
         workerTicketCounts={workerTicketCounts}
         userMetadata={userMetadata}
         fetchMedarbejdere={fetchMedarbejdere}
+        currentPage={"createTicket"}
       />
       <div className="flex-1 ml-6">
         <div className="flex justify-between items-center mb-6">

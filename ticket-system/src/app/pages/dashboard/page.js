@@ -138,7 +138,13 @@ export default function Dashboard() {
 
   return (
     <div className="container mx-auto p-4">
-      <Sidebar/>
+      <Sidebar 
+        medarbejdere={medarbejdere}
+        workerTicketCounts={workerTicketCounts}
+        userMetadata={userMetadata}
+        fetchMedarbejdere={fetchMedarbejdere}
+        currentPage={"dashboard"}
+      />
       <div className="flex justify-between items-center mb-6">
       </div>
 
