@@ -151,6 +151,12 @@ export default function Ticket({ params }) {
     }
   };
 
+  if (updates.Done) {
+    updates.Done_Timestamp = new Date().toISOString();
+  } else if (updates.Ongoing) {
+    updates.Progress_Timestamp = new Date().toISOString();
+  }
+  
   const handleUpdateTicket = async (updates) => {
     const { error } = await supabase
       .from('Tickets')
