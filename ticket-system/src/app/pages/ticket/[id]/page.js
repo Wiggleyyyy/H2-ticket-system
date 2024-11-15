@@ -58,14 +58,14 @@ export default function Ticket({ params }) {
         description: error.message,
         variant: "destructive",
       });
-      router.push("/tickets");
+      router.push("/pages/tickets");
     } else if (!data) {
       toast({
         title: "Ticket not found",
         description: "The requested ticket does not exist.",
         variant: "destructive",
       });
-      router.push("/tickets");
+      router.push("/pages/tickets");
     } else {
       setTicket(data);
     }
@@ -150,7 +150,6 @@ export default function Ticket({ params }) {
   };
 
   const handleUpdateTicket = async (updates) => {
-    // Set timestamps based on status changes
     if (updates.Done) {
       updates.Done_Timestamp = new Date().toISOString();
     } else if (updates.Ongoing) {
@@ -190,7 +189,7 @@ export default function Ticket({ params }) {
       <div className="gap-6 mt-16">
         <div className="mx-auto grid max-w-[59rem] flex-1 auto-rows-max gap-4">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => router.push('/tickets')}>
+            <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => router.push('/pages/tickets')}>
               <ChevronLeft className="h-4 w-4" />
               <span className="sr-only">Back</span>
             </Button>
@@ -232,7 +231,7 @@ export default function Ticket({ params }) {
                         id="device"
                         type="text"
                         className="w-full"
-                        value={ticket.Device || ''}
+                        value={ticket.EnhedsOplysning || ''}
                         onChange={(e) => setTicket({...ticket, Device: e.target.value})}
                       />
                     </div>
@@ -259,29 +258,6 @@ export default function Ticket({ params }) {
                                 {medarbejder.Fornavn} {medarbejder.Efternavn}
                               </SelectItem>
                             ))}
-                          </SelectGroup>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-3">
-                      <Label htmlFor="status">Status</Label>
-                      <Select value={ticket.Done ? 'Done' : ticket.Ongoing ? 'Ongoing' : 'Not Started'} onValueChange={(value) => {
-                        if (value === 'Done') {
-                          handleUpdateTicket({ Done: true, Ongoing: false });
-                        } else if (value === 'Ongoing') {
-                          handleUpdateTicket({ Done: false, Ongoing: true });
-                        } else {
-                          handleUpdateTicket({ Done: false, Ongoing: false });
-                        }
-                      }}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="Not Started">Not Started</SelectItem>
-                            <SelectItem value="Ongoing">Ongoing</SelectItem>
-                            <SelectItem value="Done">Done</SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
@@ -316,6 +292,57 @@ export default function Ticket({ params }) {
             <div className="flex flex-col gap-4">
               <Card>
                 <CardHeader>
+                  <CardTitle>Quick Update</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4">
+                  <div className="grid gap-3">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={ticket.Done ? 'Done' : ticket.Ongoing ? 'Ongoing' : 'Not Started'} onValueChange={(value) => {
+                        if (value === 'Done') {
+                          handleUpdateTicket({ Done: true, Ongoing: false });
+                        } else if (value === 'Ongoing') {
+                          handleUpdateTicket({ Done: false, Ongoing: true });
+                        } else {
+                          handleUpdateTicket({ Done: false, Ongoing: false });
+                        }
+                      }}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="Not Started">Not Started</SelectItem>
+                            <SelectItem value="Ongoing">Ongoing</SelectItem>
+                            <SelectItem value="Done">Done</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="quick-priority">Priority</Label>
+                      <Select 
+                        value={ticket.Priority.toString()} 
+                        onValueChange={(value) => handleUpdateTicket({ Priority: parseInt(value) })}
+                      >
+                        <SelectTrigger id="quick-priority">
+                          <SelectValue placeholder="Select a priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectItem value="1">High</SelectItem>
+                            <SelectItem value="2">Medium-High</SelectItem>
+                            <SelectItem value="3">Medium-Low</SelectItem>
+                            <SelectItem value="4">Low</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
                   <CardTitle>Notes</CardTitle>
                   <CardDescription>Add a note to this ticket</CardDescription>
                 </CardHeader>
@@ -331,7 +358,7 @@ export default function Ticket({ params }) {
               <div className="space-y-2">
                 {notes.map(note => (
                   <Card key={note.id}>
-                    <CardContent>
+                <CardContent>
                       <p>{note.Note}</p>
                       <Button variant="outline" size="icon" className="h-5 w-5" onClick={() => handleDeleteNote(note.id)}>
                         <Trash2 className="h-4 w-4" />

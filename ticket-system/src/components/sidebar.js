@@ -12,6 +12,8 @@ import { Separator } from './ui/separator';
 export default function Sidebar({ medarbejdere, workerTicketCounts, userMetadata, fetchMedarbejdere, currentPage }) {
   const router = useRouter();
   
+  //TODO: Write better TODO
+  
   const handleLogout = () => {
     document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     router.push("/pages/login");
